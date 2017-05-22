@@ -1,6 +1,4 @@
 
-# A Church enconding of natural numbers that only works on values of type *.
-
 natType = (|| *. (|| (|| 0. 1). (|| 1. 2)))
 
 zero = (\*. (\(|| 0. 1). (\1. 0)))
