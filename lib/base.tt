@@ -13,6 +13,6 @@ const = (\*. (\0. (\*. (\0. 2))))
 
 
 # A demonstration that we can indeed write functions from types to types and
-# from values to types.
+# from values to types. See also natToUnitF in lib/natT.tt.
 typeToType = (\*. (|| 0. 1))
 valueToType = (\ut. (|| *. 0))
