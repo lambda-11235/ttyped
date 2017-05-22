@@ -1,6 +1,6 @@
 module Parser where
 
-import Representation
+import AST
 import Lexer
 
 import Text.Parsec.Combinator
@@ -23,34 +23,35 @@ number = tokenPrim (show . getToken) pos (match' . getToken)
     match' (LNumber n) = Just n
     match' _ = Nothing
 
---sym :: Parser String
---sym = tokenPrim (show . getToken) pos (match' . getToken)
---  where
---    match' (LSym name) = Just name
---    match' _ = Nothing
+sym :: Parser String
+sym = tokenPrim (show . getToken) pos (match' . getToken)
+  where
+    match' (LSym name) = Just name
+    match' _ = Nothing
 
 pos :: (SourcePos -> LexOut -> [LexOut] -> SourcePos)
 pos oldPos (LexOut _ line col _) _ = newPos (sourceName oldPos) line col
 
 
 -- | A top level entry in the REPL.
-topREPL :: Parser Expr
-topREPL = expr <* eof
+topREPL :: Parser (Either Binding Expr)
+topREPL = (try (fmap Left binding) <|> fmap Right expr) <* eof
 
 
---bindings :: Parser [Binding]
---bindings = many binding
---
---binding :: Parser Binding
---binding = do name <- sym
---             match LEqual
---             e <- expr
---             return (Binding name e)
+bindings :: Parser [Binding]
+bindings = many binding
+
+binding :: Parser Binding
+binding = do name <- sym
+             match LEqual
+             e <- expr
+             return (Binding name e)
 
 
 expr :: Parser Expr
 expr = universe <|> parened <|> (fmap (Var . fromIntegral) number)
   <|> (match LUnitType *> pure UnitType) <|> (match LUnit *> pure Unit)
+  <|> (fmap Bind sym)
 
 universe = do match LStar
               ml <- optionMaybe level

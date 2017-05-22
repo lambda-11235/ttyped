@@ -12,6 +12,8 @@ denoted by a `*` followed by an optional `{n}`, where `n` is the universe level.
 
 ### EBNF
 
+The core language that the type checker and reduce operate on has the grammar
+
 ```
 expr = universe
      | '(' , pi , expr , '.' , expr , ')'
@@ -27,6 +29,28 @@ lambda = 'λ' | '\' ;
 digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
 ```
 
+#### Binding Extensions
+
+The core language is extended with bindings at the top level of the REPL and
+files. These bindings have the form
+
+```
+repl = bind | expr ;
+
+bind = sym , '=' , expr ;
+
+sym = char , { char } ;
+
+char = ? [a-zA-Z] ? ;
+```
+
+In addition `expr` is extended as shown below.
+
+```
+expr = ...
+     | sym ;
+```
+
 ## Semantics
 
 TODO: Add evaluation semantics.
@@ -36,7 +60,7 @@ TODO: Add evaluation semantics.
 The following is a loose definition of the typing rules.
 
 FIXME: Not sure what the proper way to denote variables is when using de Bruijn
-indices. For now I'm using `0 : t` to denote a binding to a varaible of type `t`
+indices. For now I'm using `0 : t` to denote a binding to a variable of type `t`
 and `P[0/t]` to denote substitution.
 
 ```
@@ -93,4 +117,23 @@ u : ut
 Type Error: NoUnify (Var 1) (Pi (Var 1) (Var 2))
 λ> (\*. (\(|| 0. 1). 0))
 (λ *. (λ (Π 0. 1). 0)) : (Π *. (Π (Π 0. 1). (Π 1. 2)))
+```
+
+Files that contain bindings can also be preloaded.
+
+```
+> stack exec ttyped lib/base.tt
+
+λ> id
+(λ *. (λ 0. 0)) : (Π *. (Π 0. 1))
+λ> idU
+(λ *{1}. (λ 0. 0)) : (Π *{1}. (Π 0. 1))
+λ> idT
+(Π *. (Π 0. 1)) : *{1}
+λ> (id idT)
+Type Error: NoUnify (Universe 0) (Universe 1)
+λ> (idU idT)
+(λ (Π *. (Π 0. 1)). 0) : (Π (Π *. (Π 0. 1)). (Π *. (Π 0. 1)))
+λ> ((idU idT) id)
+(λ *. (λ 0. 0)) : (Π *. (Π 0. 1))
 ```

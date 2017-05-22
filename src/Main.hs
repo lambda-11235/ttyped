@@ -1,6 +1,8 @@
 
+
 module Main where
 
+import qualified AST as A
 import Check
 import Lexer
 import Parser
@@ -16,28 +18,69 @@ import Text.Parsec.Prim
 
 
 main :: IO ()
-main = repl
+main = do files <- getArgs
+          binds <- loadFiles files
+          repl binds
 
 
-repl :: IO a
-repl =
+repl :: A.Bindings -> IO a
+repl binds =
   do input <- RL.readline "λ> "
      case input of
        Nothing -> exitSuccess
        Just str ->
          do RL.addHistory str
-            toks <- catch (evaluate (scan str)) (\e -> print (e :: ErrorCall) >> repl)
-            if null toks then repl else
+            toks <- catch (evaluate (scan str)) (\e -> print (e :: ErrorCall) >> repl binds)
+            if null toks then repl binds else
               case runParser topREPL () "REPL" toks of
                 Left err -> putStrLn ("Parse Error: " ++ show err)
 
-                Right expr ->
-                  case check expr of
-                    Left err -> putStrLn ("Type Error: " ++ show err)
+                Right (Left (A.Binding name ast)) ->
+                  case A.toRepr ast binds of
+                    Left err -> putStrLn ("Binding Error: " ++ show err)
 
-                    Right typ ->
-                      let e = reduce expr in
-                        do putStr (ppExpr e)
-                           putStr " : "
-                           putStrLn (ppExpr typ)
-            repl
+                    Right expr ->
+                      case check expr of
+                        Left err -> putStrLn ("Type Error: " ++ show err)
+
+                        Right typ ->
+                          let e = reduce expr in
+                            repl (A.addBinding name e binds)
+
+                Right (Right ast) ->
+                  case A.toRepr ast binds of
+                    Left err -> putStrLn ("Binding Error: " ++ show err)
+
+                    Right expr ->
+                      case check expr of
+                        Left err -> putStrLn ("Type Error: " ++ show err)
+
+                        Right typ ->
+                          let e = reduce expr in
+                            do putStr (ppExpr e)
+                               putStr " : "
+                               putStrLn (ppExpr typ)
+
+            repl binds
+
+
+loadFiles :: [String] -> IO A.Bindings
+loadFiles = foldlM loadFile A.empty
+
+loadFile :: A.Bindings -> String -> IO A.Bindings
+loadFile binds file = do contents <- readFile file
+                         case runParser bindings () file (scan contents) of
+                           Left err -> error (show err)
+                           Right bs -> return (foldl add' binds bs)
+  where
+    add' binds (A.Binding name ast) =
+      case A.toRepr ast binds of
+        Left err -> error ("Binding Error: " ++ show err)
+
+        Right expr ->
+          case check expr of
+            Left err -> error ("Type Error: " ++ show err)
+
+            Right typ ->
+              let e = reduce expr in
+                A.addBinding name e binds

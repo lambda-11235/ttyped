@@ -4,7 +4,7 @@ module Lexer (Token (..), LexOut (..), scan) where
 
 %wrapper "posn"
 
--- @char = [a-zA-Z]
+@char = [a-zA-Z]
 @digit = [0-9]
 
 tokens :-
@@ -20,7 +20,7 @@ tokens :-
 
   "."                                   { \p s -> lexOut p LDot }
 
-  -- "="                                   { \p s -> lexOut p LEqual }
+  "="                                   { \p s -> lexOut p LEqual }
 
   "||"                                  { \p s -> lexOut p LPi }
   "Π"                                   { \p s -> lexOut p LPi }
@@ -34,7 +34,7 @@ tokens :-
   "u"                                   { \p s -> lexOut p LUnit }
 
   @digit+                               { \p s -> lexOut p (LNumber (read s)) }
-  -- @char+                                { \p s -> lexOut p (LSym s) }
+  @char+                                { \p s -> lexOut p (LSym s) }
 
 {
 data Token = LLBracket
@@ -42,14 +42,14 @@ data Token = LLBracket
            | LLParen
            | LRParen
            | LDot
-           -- | LEqual
+           | LEqual
            | LLambda
            | LPi
            | LStar
            | LUnitType
            | LUnit
            | LNumber Int
-           -- | LSym String
+           | LSym String
            deriving (Eq, Show)
 
 data LexOut = LexOut { offset :: Int

@@ -1,0 +1,18 @@
+
+unitElim = (\*. (\ut. (\1. 0)))
+
+# The identity function of types of type *, as well as its type.
+id = (\*. (\0. 0))
+idT = (|| *. (|| 0. 1))
+
+# The identity function of types of type *{1}.
+idU = (\*{1}. (\0. 0))
+
+
+const = (\*. (\0. (\*. (\0. 2))))
+
+
+# A demonstration that we can indeed write functions from types to types and
+# from values to types.
+typeToType = (\*. (|| 0. 1))
+valueToType = (\ut. (|| *. 0))
