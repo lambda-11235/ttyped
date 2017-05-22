@@ -1,6 +1,6 @@
 name:                ttyped
 version:             0.1.0.0
-synopsis:            An dependently typed lambda calculus with cumalitive universes.
+synopsis:            An dependently typed lambda calculus.
 -- description:
 homepage:            https://github.com/lambda-11235/ttyped
 license:             BSD3

@@ -13,7 +13,6 @@ type Level = Word8
 type Index = Word8
 
 
-  -- Universes should be cumulative. if x : Universe n and n <= m then x : Universe m
 data Expr = Universe Level
           | Pi Expr Expr
           | Lambda Expr Expr

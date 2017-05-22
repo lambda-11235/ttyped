@@ -49,26 +49,6 @@ maxUniverse e _ = Left (NotAUniverse e)
 
 checkApply :: Expr -> Expr -> Expr -> Either Error Expr
 checkApply (Pi ta tb) tc e =
-  do unify tc ta
-     return (reduce (subst tb e))
+  if ta == tc then return (reduce (subst tb e))
+              else Left (NoUnify ta tc)
 checkApply e1 e2 _ = Left (NonPiTypeApplied e1 e2)
-
--- | Determines if an element of a type given by the first argument can be
--- used where the type given by the second argument is expected.
-unify :: Expr -> Expr -> Either Error ()
-unify u1@(Universe n) u2@(Universe m) =
-  if n <= m then return () else Left (NoUnify u1 u2)
-unify (Pi t1 t2) (Pi t3 t4) =
-  do unify t1 t3
-     unify t2 t4
-unify (Lambda t1 b1) (Lambda t2 b2) =
-  do unify t1 t2
-     unify b1 b2
-unify (Apply e1 e2) (Apply e3 e4) =
-  do unify e1 e3
-     unify e2 e4
-unify v1@(Var n) v2@(Var m) =
-  if n == m then return () else Left (NoUnify v1 v2)
-unify UnitType UnitType = return ()
-unify Unit Unit = return ()
-unify t1 t2 = Left (NoUnify t1 t2)
