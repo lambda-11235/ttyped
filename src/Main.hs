@@ -20,7 +20,7 @@ import Text.Parsec.Prim
 main :: IO ()
 main = do files <- getArgs
           binds <- loadFiles files
-          repl binds
+          seq binds (repl binds)
 
 
 repl :: A.Bindings -> IO a
@@ -75,11 +75,11 @@ loadFile binds file = do contents <- readFile file
   where
     add' binds (A.Binding name ast) =
       case A.toRepr ast binds of
-        Left err -> error ("Binding Error: " ++ show err)
+        Left err -> error ("Binding Error (" ++ file ++ "): " ++ show err)
 
         Right expr ->
           case check expr of
-            Left err -> error ("Type Error: " ++ show err)
+            Left err -> error ("Type Error (" ++ file ++ "): " ++ show err)
 
             Right typ ->
               let e = reduce expr in

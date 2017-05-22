@@ -8,8 +8,7 @@ succ = (\natType. (\(|| *. *). (\*. (1 ((2 1) 0)))))
 
 add = (\natType. (\natType. (\(|| *. *). (\*. ((3 1) ((2 1) 0))))))
 
-# This will not unify as natType is of type *{1} and not *.
-# mult = (\natType. (\natType. (((1 natType) (add 0)) zero)))
+mult = (\natType. (\natType. (\(|| *. *). (\*. ((3 (2 1)) 0)))))
 
 one = (succ zero)
 two = (succ one)
