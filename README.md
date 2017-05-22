@@ -29,9 +29,40 @@ digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
 
 ## Semantics
 
-TTyped a hierarchy of type universes.
+TODO: Add evaluation semantics.
 
-TODO
+### Typing Rules
+
+The following is a loose definition of the typing rules.
+
+FIXME: Not sure what the proper way to denote variables is when using de Bruijn
+indices. For now I'm using `0 : t` to denote a binding to a varaible of type `t`
+and `P[0/t]` to denote substitution.
+
+```
+----------------------
+ G |- *{n} : *{n + 1}
+
+ G, t : *{n} |- 0 : t    G, 0 : t |- P : *{m}
+---------------------------------------------- p = max n m
+            G |- (Π t. P) : *{p}
+
+ G, 0 : t |- P : *{n}    G, 0 : t |- e : P
+-------------------------------------------
+         G |- (λ t. e) : (Π t. P)
+
+ G |- f : (Π t. P)    G |- e : t
+---------------------------------
+      G |- (f e) : P[0/e]
+
+    G |-
+-------------
+ G |- u : ut
+
+    G |-
+-------------
+ G |- ut : *
+```
 
 ## Example Session
 
