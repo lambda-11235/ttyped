@@ -1,18 +1,21 @@
 
-unitElim = (\*. (\0. (\ut. 1)))
+largeUniverse = *{1000}
+
+# Type checks when its second argument has the type given by its first argument.
+# Useful for insuring that one wrote a function correctly.
+hasType = (\largeUniverse. (\0. 0))
+
+
+unitElim = (\*{1}. (\0. (\ut. 1)))
 
 # The identity function of types of type *, as well as its type.
-id = (\*. (\0. 0))
-idT = (|| *. (|| 0. 1))
+id = (\*{1}. (\0. 0))
+idT = (|| *{1}. (|| 0. 1))
 
-# The identity function of types of type *{1}.
-idU = (\*{1}. (\0. 0))
+const = (\*{1}. (\0. (\*{1}. (\0. 2))))
 
-
-const = (\*. (\0. (\*. (\0. 2))))
-
-pair = (\*. (\*. (\1. (\1. (\*. (\(|| 4. (|| 4. 2)). ((0 3) 2)))))))
-pairT = (\*. (\*. (|| *. (|| (|| 2. (|| 2. 2)). 1))))
+pair = (\*{1}. (\*{1}. (\1. (\1. (\*{1}. (\(|| 4. (|| 4. 2)). ((0 3) 2)))))))
+pairT = (\*{1}. (\*{1}. (|| *{1}. (|| (|| 2. (|| 2. 2)). 1))))
 
 # A demonstration that we can indeed write functions from types to types and
 # from values to types. See also natToUnitF in lib/natT.tt.

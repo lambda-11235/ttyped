@@ -1,9 +1,9 @@
 
 # TTyped
 
-TTyped is a dependently typed language with type universes. de Bruijn indices
-are used for variable identification. There is one base type, which is the unit
-type `ut`, whose value is denoted by `u`.
+TTyped is a dependently typed language with cumulative type universes. de Bruijn
+indices are used for variable identification. There is one base type, which is
+the unit type `ut`, whose value is denoted by `u`.
 
 ## Syntax
 
@@ -57,7 +57,8 @@ TODO: Add evaluation semantics.
 
 ### Typing Rules
 
-The following is a loose definition of the typing rules.
+The following is a loose definition of the typing rules. TTyped uses cumulative
+universes.
 
 FIXME: Not sure what the proper way to denote variables is when using de Bruijn
 indices. For now I'm using `0 : t` to denote a binding to a variable of type `t`
@@ -66,6 +67,11 @@ and `P[0/t]` to denote substitution.
 ```
 ----------------------
  G |- *{n} : *{n + 1}
+
+ G |- t : *{n}
+--------------- n <= m
+ G |- t : *{m}
+
 
  G, t : *{n} |- 0 : t    G, 0 : t |- P : *{m}
 ---------------------------------------------- p = max n m
@@ -79,13 +85,14 @@ and `P[0/t]` to denote substitution.
 ---------------------------------
       G |- (f e) : P[0/e]
 
-    G |-
--------------
- G |- u : ut
 
     G |-
 -------------
  G |- ut : *
+
+    G |-
+-------------
+ G |- u : ut
 ```
 
 ## Example Session
@@ -102,9 +109,8 @@ ut : *
 * : *{1}
 λ> *{1}
 *{1} : *{2}
-λ> ((\*{9}. 0) *{1})
-Type Error: NoUnify (Universe 9) (Universe 2)
-λ> # Type universes are not cumulative
+λ> ((\*{9}. 0) *)
+* : *{9}
 
 λ> (\*. (\0. 0))
 (λ *. (λ 0. 0)) : (Π *. (Π 0. 1))
@@ -125,17 +131,17 @@ Files that contain bindings can also be preloaded.
 > stack exec ttyped lib/base.tt
 
 λ> id
-(λ *. (λ 0. 0)) : (Π *. (Π 0. 1))
-λ> idU
 (λ *{1}. (λ 0. 0)) : (Π *{1}. (Π 0. 1))
 λ> idT
-(Π *. (Π 0. 1)) : *{1}
-λ> (id idT)
-Type Error: NoUnify (Universe 0) (Universe 1)
-λ> (idU idT)
-(λ (Π *. (Π 0. 1)). 0) : (Π (Π *. (Π 0. 1)). (Π *. (Π 0. 1)))
-λ> ((idU idT) id)
-(λ *. (λ 0. 0)) : (Π *. (Π 0. 1))
+(Π *{1}. (Π 0. 1)) : *{2}
+λ> (id ut)
+(λ ut. 0) : (Π ut. ut)
+λ> ((id ut) u)
+u : ut
+λ> hasType
+(λ *{1000}. (λ 0. 0)) : (Π *{1000}. (Π 0. 1))
+λ> ((hasType idT) id)
+(λ *{1}. (λ 0. 0)) : (Π *{1}. (Π 0. 1))
 ```
 
 ## TODO
