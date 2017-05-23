@@ -1,4 +1,6 @@
 
+# Natural numbers that eliminate to values whose type is of type *.
+
 natType = (|| *. (|| (|| 0. 1). (|| 1. 2)))
 
 zero = (\*. (\(|| 0. 1). (\1. 0)))

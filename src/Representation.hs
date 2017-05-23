@@ -9,8 +9,8 @@ module Representation ( Level
 import Data.Word
 
 
-type Level = Word8
-type Index = Word8
+type Level = Word64
+type Index = Word64
 
 
 data Expr = Universe Level

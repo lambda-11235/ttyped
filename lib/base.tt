@@ -1,5 +1,5 @@
 
-unitElim = (\*. (\ut. (\1. 0)))
+unitElim = (\*. (\0. (\ut. 1)))
 
 # The identity function of types of type *, as well as its type.
 id = (\*. (\0. 0))
