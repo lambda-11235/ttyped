@@ -1,9 +1,9 @@
 
 # TTyped
 
-TTyped is a dependently typed language with hierarchical type universes. de Bruijn
-indices are used for variable identification. There is one base type, which is
-the unit type `ut`, whose value is denoted by `u`.
+TTyped is a dependently typed language with type universes. de Bruijn indices
+are used for variable identification. There is one base type, which is the unit
+type `ut`, whose value is denoted by `u`.
 
 ## Syntax
 
@@ -137,3 +137,7 @@ Type Error: NoUnify (Universe 0) (Universe 1)
 λ> ((idU idT) id)
 (λ *. (λ 0. 0)) : (Π *. (Π 0. 1))
 ```
+
+## TODO
+
+- Add some sort of way of defining data types.
