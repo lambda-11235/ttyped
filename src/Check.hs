@@ -27,7 +27,8 @@ check' (Pi ta tb) env =
      tbt <- check' tb (map incIndices (ta' : env))
      maxUniverse tat tbt
 check' (Lambda t b) env =
-  do check' t env
+  do tt <- check' t env
+     isUniverse tt
      let t' = reduce t
      bt <- check' b (map incIndices (t' : env))
      return (Pi t' bt)
@@ -43,9 +44,15 @@ check' Unit _ = return UnitType
 
 
 maxUniverse :: Expr -> Expr -> Either Error Expr
-maxUniverse (Universe n) (Universe m) = pure (Universe (max n m))
+maxUniverse (Universe n) (Universe m) = return (Universe (max n m))
 maxUniverse (Universe _) e = Left (NotAUniverse e)
 maxUniverse e _ = Left (NotAUniverse e)
+
+
+isUniverse :: Expr -> Either Error ()
+isUniverse (Universe n) = return ()
+isUniverse e = Left (NotAUniverse e)
+
 
 checkApply :: Expr -> Expr -> Expr -> Either Error Expr
 checkApply (Pi ta tb) tc e =
