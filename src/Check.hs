@@ -4,13 +4,17 @@ module Check where
 import Reduce
 import Representation
 
+import Data.Foldable (foldlM, foldrM)
+
+
 type Env = [Expr]
 
 
 data Error = NotAUniverse Expr
            | UnboundVar Index
-           | NoUnify Expr Expr
+           | NotSubType Expr Expr
            | NonPiTypeApplied Expr Expr
+           | FinToLarge FinExpr
            deriving (Eq, Show)
 
 
@@ -39,8 +43,27 @@ check' (Apply e1 e2) env =
 check' (Var index) env = if (fromIntegral index) < (length env)
                             then return (env !! (fromIntegral index))
                          else Left (UnboundVar index)
-check' UnitType _ = return (Universe 0)
-check' Unit _ = return UnitType
+check' (F finExpr) env = checkFinExpr finExpr env
+
+
+checkFinExpr :: FinExpr -> Env -> Either Error Expr
+checkFinExpr (FinType _) _ = return (Universe 0)
+checkFinExpr f@(Fin n t) _ =
+  if n < t then return (F (FinType t)) else Left (FinToLarge f)
+checkFinExpr (FinElim n Nothing) _ = return (feType n)
+checkFinExpr (FinElim n (Just (t, cs))) env =
+  do tt <- check' t env
+     csts <- mapM (\c -> check' c env) cs
+     fet <- checkApply (feType n) tt t
+     foldlM (\f (t, e) -> checkApply f t e) fet (zip csts cs)
+
+feType n = (Pi (Pi (F (FinType n)) (Universe 1)) (feType' n 0))
+  where
+    feType' 0 index = (Pi (F (FinType n)) (Apply (Var (index + 1)) (Var 0)))
+    feType' m index =
+      let argTy = Apply (Var index) (F (Fin (n - m) n))
+          bodyTy = feType' (m - 1) (index + 1)
+      in (Pi argTy bodyTy)
 
 
 maxUniverse :: Expr -> Expr -> Either Error Expr
@@ -56,14 +79,16 @@ isUniverse e = Left (NotAUniverse e)
 
 checkApply :: Expr -> Expr -> Expr -> Either Error Expr
 checkApply (Pi ta tb) tc e =
-  do unify tc ta
+  do subType tc ta
      return (reduce (subst tb e))
 checkApply e1 e2 _ = Left (NonPiTypeApplied e1 e2)
 
 
 -- | Determines if an element of a type given by the first argument can be
 -- used where the type given by the second argument is expected.
-unify :: Expr -> Expr -> Either Error ()
-unify u1@(Universe n) u2@(Universe m) =
-  if n <= m then return () else Left (NoUnify u1 u2)
-unify t1 t2 = if t1 == t2 then return () else  Left (NoUnify t1 t2)
+subType :: Expr -> Expr -> Either Error ()
+subType u1@(Universe n) u2@(Universe m) =
+  if n <= m then return () else Left (NotSubType u1 u2)
+subType (Pi t1 t2) (Pi t3 t4) = subType t3 t1 >> subType t2 t4
+-- TODO: Determine is subtyping is correct.
+subType t1 t2 = if t1 == t2 then return () else  Left (NotSubType t1 t2)

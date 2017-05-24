@@ -1,7 +1,9 @@
 
 module Representation ( Level
                       , Index
+                      , Nat
                       , Expr (..)
+                      , FinExpr (..)
                       , incIndices
                       , ppExpr)
   where
@@ -11,6 +13,7 @@ import Data.Word
 
 type Level = Word64
 type Index = Word64
+type Nat = Word64
 
 
 data Expr = Universe Level
@@ -18,9 +21,15 @@ data Expr = Universe Level
           | Lambda Expr Expr
           | Apply Expr Expr
           | Var Index
-          | UnitType
-          | Unit
+          | F FinExpr
           deriving (Eq, Show)
+
+data FinExpr = FinType Nat
+             | Fin Nat Nat
+             -- FinElim second argument is optionally the type and cases it's
+             -- applied to.
+             | FinElim Nat (Maybe (Expr, [Expr]))
+             deriving (Eq, Show)
 
 
 incIndices :: Expr -> Expr
@@ -35,8 +44,16 @@ incIndices e = incIndices' e 0
       Apply (incIndices' e1 idx) (incIndices' e2 idx)
     incIndices' (Var index) idx =
       if index < idx then Var index else Var (index + 1)
-    incIndices' UnitType _ = UnitType
-    incIndices' Unit _ = Unit
+    incIndices' (F finExpr) idx = F (incFinExpr finExpr idx)
+
+    incFinExpr ft@(FinType _) _ = ft
+    incFinExpr f@(Fin _ _) _ = f
+    incFinExpr fe@(FinElim n Nothing) _ = fe
+    incFinExpr (FinElim n (Just (t, cs))) idx =
+      let ii x = incIndices' x idx
+          t' = ii t
+          cs' = map ii cs
+       in FinElim n (Just (t', cs'))
 
 
 ppExpr :: Expr -> String
@@ -46,5 +63,11 @@ ppExpr (Pi arg body) = "(Π " ++ (ppExpr arg) ++ ". " ++ (ppExpr body) ++ ")"
 ppExpr (Lambda arg body) = "(λ " ++ (ppExpr arg) ++ ". " ++ (ppExpr body) ++ ")"
 ppExpr (Apply e1 e2) = "(" ++ (ppExpr e1) ++ " " ++ (ppExpr e2) ++ ")"
 ppExpr (Var index) = show index
-ppExpr UnitType = "ut"
-ppExpr Unit = "u"
+ppExpr (F finExpr) = ppFinExpr finExpr
+
+ppFinExpr (FinType n) = "F[" ++ show n ++ "]"
+ppFinExpr (Fin n t) = "[" ++ show n ++ "," ++ show t ++ "]"
+ppFinExpr (FinElim n Nothing) = "finElim[" ++ show n ++ "]"
+ppFinExpr (FinElim n (Just (t, cs))) =
+  let inner = "(finElim[" ++ show n ++ "]" ++ " " ++ ppExpr t ++ ")" in
+    foldl (\r e -> "(" ++ r ++ " " ++ ppExpr e ++ ")") inner cs

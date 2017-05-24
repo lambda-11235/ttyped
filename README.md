@@ -2,13 +2,15 @@
 # TTyped
 
 TTyped is a dependently typed language with cumulative type universes. de Bruijn
-indices are used for variable identification. There is one base type, which is
-the unit type `ut`, whose value is denoted by `u`.
+indices are used for variable identification. This implementation also provides
+finite types.
 
 ## Syntax
 
 Comment lines start with a `#` and extend to the end of the line. Universes are
 denoted by a `*` followed by an optional `{n}`, where `n` is the universe level.
+`F[n]` denotes a finite type with `n` elements, `[m,n]` (where m < n) denotes an
+element of this type, and `finElim[n]` is its eliminator.
 
 ### EBNF
 
@@ -19,7 +21,12 @@ expr = universe
      | '(' , pi , expr , '.' , expr , ')'
      | '(' , lambda , expr , '.' , expr , ')'
      | '(' , expr , expr , ')'
-     | num ;
+     | num
+     | finexpr ;
+
+finexpr = 'F', '[' , num , ']'
+        | '[' , num , ',' , num , ']' ;
+        | "finElim" , '[' , num , ']' ;
 
 universe = '*' , [ '{' , num , '}' ] ;
 num = digit , { digit } ;
@@ -58,24 +65,35 @@ TODO: Add evaluation semantics.
 ### Typing Rules
 
 The following is a loose definition of the typing rules. TTyped uses cumulative
-universes.
+universes with subtyping.
+
+TODO: Verify that subtyping relations are complete and correct. I'm pretty sure
+there's a problem with the current implementation, but I don't know what it
+could be.
 
 `G` is t context, `G, x` denotes appending of a variable onto a context, and
 `P/e` denotes substitution for the index 0. Also, `*` is short for `*{0}`.
 
 ```
-        G |-
+ A <: B    G |- x : A
+----------------------
+      G |- x : B
+
+
 ----------------------
  G |- *{n} : *{n + 1}
 
- G |- t : *{n}
---------------- n <= m
- G |- t : *{m}
+-------------------- n <= m
+ G |- *{n} <: *{m}
 
 
  G, t : *{n} |- x : t    G, x : t |- P : *{m}
 ---------------------------------------------- p = max n m
             G |- (Π t. P) : *{p}
+
+ G |- t2 <: t1    G, x : t2 |- P1 <: P2
+----------------------------------------
+        G |- (Π t1. P1) <: (Π t2. P2)
 
  G, x : t |- P : *{m}    G, x : t |- e : P
 -------------------------------------------
@@ -86,13 +104,14 @@ universes.
       G |- (f e) : P/e
 
 
-    G |-
 -------------
- G |- ut : *
+ G |- F[N] : *
 
-    G |-
--------------
- G |- u : ut
+-----------------------------------------
+ G |- [n,m] : F[m] if n < m else invalid
+
+-------------------------------------------------------------------------------------------------------------------------------
+ G |- finElim[n] : (Π (Π F[n]. *{1}). (Π (0 [0, n]). (Π (1 [1, n]). (... ((Π (<n - 1> [<n - 1>, n]). Π F[n]. (<n + 1> 0)))))))
 ```
 
 ## Example Session
@@ -120,7 +139,7 @@ ut : *
 u : ut
 
 λ> (\*. (\(|| 0. 1). (0 0)))
-Type Error: NoUnify (Var 1) (Pi (Var 1) (Var 2))
+Type Error: NotSubType (Pi (Var 1) (Var 2)) (Var 1)
 λ> (\*. (\(|| 0. 1). 0))
 (λ *. (λ (Π 0. 1). 0)) : (Π *. (Π (Π 0. 1). (Π 1. 2)))
 ```
@@ -146,4 +165,6 @@ u : ut
 
 ## TODO
 
-- Add some sort of way of defining data types.
+- Add sigma types.
+- Add sum (disjunctive) types.
+- Add some sort of way of defining inductive data types (W-types maybe?).

@@ -31,10 +31,14 @@ data Expr = Universe R.Level
           | Lambda Expr Expr
           | Apply Expr Expr
           | Var R.Index
-          | UnitType
-          | Unit
+          | F FinExpr
           | Bind String
           deriving (Eq, Show)
+
+data FinExpr = FinType R.Nat
+             | Fin R.Nat R.Nat
+             | FinElim R.Nat
+             deriving (Eq, Show)
 
 
 toRepr :: Expr -> Bindings -> Either BindingError R.Expr
@@ -43,8 +47,9 @@ toRepr (Pi arg body) binds = R.Pi <$> (toRepr arg binds) <*> (toRepr body binds)
 toRepr (Lambda arg body) binds = R.Lambda <$>(toRepr arg binds) <*> (toRepr body binds)
 toRepr (Apply e1 e2) binds = R.Apply <$> (toRepr e1 binds) <*> (toRepr e2 binds)
 toRepr (Var index) _ = pure (R.Var index)
-toRepr UnitType _ = pure R.UnitType
-toRepr Unit _ = pure R.Unit
+toRepr (F (FinType n)) _ = pure (R.F (R.FinType n))
+toRepr (F (Fin n t)) _ = pure (R.F (R.Fin n t))
+toRepr (F (FinElim n)) _ = pure (R.F (R.FinElim n Nothing))
 toRepr (Bind name) binds = case getBinding name binds of
                              Just expr -> pure expr
                              Nothing -> Left (Undeclared name)

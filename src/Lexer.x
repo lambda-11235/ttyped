@@ -18,9 +18,16 @@ tokens :-
   "("                                   { \p s -> lexOut p LLParen }
   ")"                                   { \p s -> lexOut p LRParen }
 
+  "["                                   { \p s -> lexOut p LLSquare }
+  "]"                                   { \p s -> lexOut p LRSquare }
+
+  ","                                   { \p s -> lexOut p LComma }
   "."                                   { \p s -> lexOut p LDot }
 
   "="                                   { \p s -> lexOut p LEqual }
+
+  "F"                                   { \p s -> lexOut p LF }
+  "finElim"                             { \p s -> lexOut p LFinElim }
 
   "||"                                  { \p s -> lexOut p LPi }
   "Π"                                   { \p s -> lexOut p LPi }
@@ -30,9 +37,6 @@ tokens :-
 
   "*"                                   { \p s -> lexOut p LStar }
 
-  "ut"                                  { \p s -> lexOut p LUnitType }
-  "u"                                   { \p s -> lexOut p LUnit }
-
   @digit+                               { \p s -> lexOut p (LNumber (read s)) }
   @char+                                { \p s -> lexOut p (LSym s) }
 
@@ -41,13 +45,16 @@ data Token = LLBracket
            | LRBracket
            | LLParen
            | LRParen
+           | LLSquare
+           | LRSquare
+           | LComma
            | LDot
            | LEqual
+           | LF
+           | LFinElim
            | LLambda
            | LPi
            | LStar
-           | LUnitType
-           | LUnit
            | LNumber Int
            | LSym String
            deriving (Eq, Show)

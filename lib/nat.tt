@@ -25,4 +25,4 @@ nine = (succ eight)
 # Converts a natural number n to a function type the takes n unit types and
 # returns a unit type. Demonstrates a dependently typed function that takes a
 # value and returns a type.
-natToUnitF = (\natType. (((0 *) (\*. (|| ut. 1))) ut))
+natToUnitF = (\natType. (((0 *) (\*. (|| F[1]. 1))) F[1]))

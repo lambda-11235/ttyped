@@ -6,8 +6,6 @@ largeUniverse = *{1000}
 hasType = (\largeUniverse. (\0. 0))
 
 
-unitElim = (\(|| ut. *). (\(0 u). (\ut. 1)))
-
 # The identity function of types of type *, as well as its type.
 id = (\*{1}. (\0. 0))
 idT = (|| *{1}. (|| 0. 1))
@@ -17,7 +15,14 @@ const = (\*{1}. (\0. (\*{1}. (\0. 2))))
 pair = (\*{1}. (\*{1}. (\1. (\1. (\*{1}. (\(|| 4. (|| 4. 2)). ((0 3) 2)))))))
 pairT = (\*{1}. (\*{1}. (|| *{1}. (|| (|| 2. (|| 2. 2)). 1))))
 
-# A demonstration that we can indeed write functions from types to types and
-# from values to types. See also natToUnitF in lib/natT.tt.
-typeToType = (\*. (|| 0. 1))
-valueToType = (\ut. (|| *. 0))
+
+botType = F[0]
+botElim = finElim[0]
+
+unitType = F[1]
+unit = [0,1]
+
+boolType = F[2]
+false = [0,2]
+true = [1,2]
+if = finElim[2]

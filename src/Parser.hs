@@ -50,7 +50,7 @@ binding = do name <- sym
 
 expr :: Parser Expr
 expr = universe <|> parened <|> (fmap (Var . fromIntegral) number)
-  <|> (match LUnitType *> pure UnitType) <|> (match LUnit *> pure Unit)
+  <|> (fmap F finExpr)
   <|> (fmap Bind sym)
 
 universe = do match LStar
@@ -85,3 +85,26 @@ lambda = do match LLambda
 apply = do e1 <- expr
            e2 <- expr
            return (Apply e1 e2)
+
+
+finExpr :: Parser FinExpr
+finExpr = finType <|> fin <|> finElim
+
+finType = do match LF
+             match LLSquare
+             n <- fmap fromIntegral number
+             match LRSquare
+             return (FinType n)
+
+fin= do match LLSquare
+        n <- fmap fromIntegral number
+        match LComma
+        t <- fmap fromIntegral number
+        match LRSquare
+        return (Fin n t)
+
+finElim = do match LFinElim
+             match LLSquare
+             n <- fmap fromIntegral number
+             match LRSquare
+             return (FinElim n)
