@@ -6,7 +6,7 @@ largeUniverse = *{1000}
 hasType = (\largeUniverse. (\0. 0))
 
 
-unitElim = (\(|| ut. *). (\(|| ut. (1 0)). (\ut. (1 0))))
+unitElim = (\(|| ut. *). (\(0 u). (\ut. 1)))
 
 # The identity function of types of type *, as well as its type.
 id = (\*{1}. (\0. 0))
