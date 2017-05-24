@@ -19,9 +19,9 @@ apply (F finExpr) e = applyFinExpr finExpr e
 apply e1 e2 = Apply e1 e2
 
 applyFinExpr :: FinExpr -> Expr -> Expr
-applyFinExpr (FinElim n Nothing) t = F (FinElim n (Just (t, [])))
-applyFinExpr fe@(FinElim n (Just (t, cs))) e =
-  if length cs < fromIntegral n then F (FinElim n (Just (t, cs ++ [e]))) else
+applyFinExpr (FinElim n l Nothing) t = F (FinElim n l (Just (t, [])))
+applyFinExpr fe@(FinElim n l (Just (t, cs))) e =
+  if length cs < fromIntegral n then F (FinElim n l (Just (t, cs ++ [e]))) else
   case e of
     (F (Fin m _)) -> cs !! (fromIntegral m)
     _ -> Apply (F fe) e
@@ -53,6 +53,6 @@ subst e1 e2 = subst' e1 e2 0
 
     substFin ft@(FinType _) _ _ = ft
     substFin f@(Fin _ _) _ _ = f
-    substFin fe@(FinElim n Nothing) _ _ = fe
-    substFin (FinElim n (Just (t, cs))) e idx =
-      FinElim n (Just (subst' t e idx, map (\c -> subst' c e idx) cs))
+    substFin fe@(FinElim _ _ Nothing) _ _ = fe
+    substFin (FinElim n l (Just (t, cs))) e idx =
+      FinElim n l (Just (subst' t e idx, map (\c -> subst' c e idx) cs))

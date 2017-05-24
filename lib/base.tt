@@ -17,7 +17,6 @@ pairT = (\*{1}. (\*{1}. (|| *{1}. (|| (|| 2. (|| 2. 2)). 1))))
 
 
 botType = F[0]
-botElim = finElim[0]
 
 unitType = F[1]
 unit = [0,1]
@@ -25,4 +24,3 @@ unit = [0,1]
 boolType = F[2]
 false = [0,2]
 true = [1,2]
-if = finElim[2]

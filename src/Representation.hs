@@ -26,9 +26,9 @@ data Expr = Universe Level
 
 data FinExpr = FinType Nat
              | Fin Nat Nat
-             -- FinElim second argument is optionally the type and cases it's
+             -- FinElim last argument is optionally the type and cases it's
              -- applied to.
-             | FinElim Nat (Maybe (Expr, [Expr]))
+             | FinElim Nat Level (Maybe (Expr, [Expr]))
              deriving (Eq, Show)
 
 
@@ -48,12 +48,12 @@ incIndices e = incIndices' e 0
 
     incFinExpr ft@(FinType _) _ = ft
     incFinExpr f@(Fin _ _) _ = f
-    incFinExpr fe@(FinElim n Nothing) _ = fe
-    incFinExpr (FinElim n (Just (t, cs))) idx =
+    incFinExpr fe@(FinElim _ _ Nothing) _ = fe
+    incFinExpr (FinElim n l (Just (t, cs))) idx =
       let ii x = incIndices' x idx
           t' = ii t
           cs' = map ii cs
-       in FinElim n (Just (t', cs'))
+       in FinElim n l (Just (t', cs'))
 
 
 ppExpr :: Expr -> String
@@ -67,7 +67,7 @@ ppExpr (F finExpr) = ppFinExpr finExpr
 
 ppFinExpr (FinType n) = "F[" ++ show n ++ "]"
 ppFinExpr (Fin n t) = "[" ++ show n ++ "," ++ show t ++ "]"
-ppFinExpr (FinElim n Nothing) = "finElim[" ++ show n ++ "]"
-ppFinExpr (FinElim n (Just (t, cs))) =
-  let inner = "(finElim[" ++ show n ++ "]" ++ " " ++ ppExpr t ++ ")" in
+ppFinExpr (FinElim n l Nothing) = "finElim[" ++ show n ++ "," ++ show l ++ "]"
+ppFinExpr (FinElim n l (Just (t, cs))) =
+  let inner = "(" ++ (ppFinExpr (FinElim n l Nothing)) ++ " " ++ ppExpr t ++ ")" in
     foldl (\r e -> "(" ++ r ++ " " ++ ppExpr e ++ ")") inner cs

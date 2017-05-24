@@ -10,7 +10,8 @@ finite types.
 Comment lines start with a `#` and extend to the end of the line. Universes are
 denoted by a `*` followed by an optional `{n}`, where `n` is the universe level.
 `F[n]` denotes a finite type with `n` elements, `[m,n]` (where m < n) denotes an
-element of this type, and `finElim[n]` is its eliminator.
+element of this type, and `finElim[n,l]` is its eliminator which eliminates to
+a value whose type has the type `*{l}`.
 
 ### EBNF
 
@@ -26,7 +27,7 @@ expr = universe
 
 finexpr = 'F', '[' , num , ']'
         | '[' , num , ',' , num , ']' ;
-        | "finElim" , '[' , num , ']' ;
+        | "finElim" , '[' , num , ',' , num , ']' ;
 
 universe = '*' , [ '{' , num , '}' ] ;
 num = digit , { digit } ;
@@ -110,8 +111,8 @@ could be.
 -----------------------------------------
  G |- [n,m] : F[m] if n < m else invalid
 
--------------------------------------------------------------------------------------------------------------------------------
- G |- finElim[n] : (Π (Π F[n]. *{1}). (Π (0 [0, n]). (Π (1 [1, n]). (... ((Π (<n - 1> [<n - 1>, n]). Π F[n]. (<n + 1> 0)))))))
+---------------------------------------------------------------------------------------------------------------------------------
+ G |- finElim[n,l] : (Π (Π F[n]. *{l}). (Π (0 [0, n]). (Π (1 [1, n]). (... ((Π (<n - 1> [<n - 1>, n]). Π F[n]. (<n + 1> 0)))))))
 ```
 
 ## Example Session

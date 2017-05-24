@@ -96,15 +96,17 @@ finType = do match LF
              match LRSquare
              return (FinType n)
 
-fin= do match LLSquare
-        n <- fmap fromIntegral number
-        match LComma
-        t <- fmap fromIntegral number
-        match LRSquare
-        return (Fin n t)
+fin = do match LLSquare
+         n <- fmap fromIntegral number
+         match LComma
+         t <- fmap fromIntegral number
+         match LRSquare
+         return (Fin n t)
 
 finElim = do match LFinElim
              match LLSquare
              n <- fmap fromIntegral number
+             match LComma
+             l <- fmap fromIntegral number
              match LRSquare
-             return (FinElim n)
+             return (FinElim n l)
