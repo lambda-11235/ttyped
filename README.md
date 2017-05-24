@@ -60,11 +60,11 @@ TODO: Add evaluation semantics.
 The following is a loose definition of the typing rules. TTyped uses cumulative
 universes.
 
-FIXME: Not sure what the proper way to denote variables is when using de Bruijn
-indices. For now I'm using `0 : t` to denote a binding to a variable of type `t`
-and `P[0/t]` to denote substitution.
+`G` is t context, `G, x` denotes appending of a variable onto a context, and
+`P/e` denotes substitution for the index 0. Also, `*` is short for `*{0}`.
 
 ```
+        G |-
 ----------------------
  G |- *{n} : *{n + 1}
 
@@ -73,17 +73,17 @@ and `P[0/t]` to denote substitution.
  G |- t : *{m}
 
 
- G, t : *{n} |- 0 : t    G, 0 : t |- P : *{m}
+ G, t : *{n} |- x : t    G, x : t |- P : *{m}
 ---------------------------------------------- p = max n m
             G |- (Π t. P) : *{p}
 
- G, 0 : t |- P : *{n}    G, 0 : t |- e : P
+ G, x : t |- P : *{m}    G, x : t |- e : P
 -------------------------------------------
-         G |- (λ t. e) : (Π t. P)
+       G |- (λ t. e) : (Π t. P)
 
  G |- f : (Π t. P)    G |- e : t
 ---------------------------------
-      G |- (f e) : P[0/e]
+      G |- (f e) : P/e
 
 
     G |-
