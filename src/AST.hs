@@ -47,6 +47,7 @@ data Object = Var R.Nat
 
 
 toTerm :: Term -> Bindings -> Either BindingError R.Term
+-- TODO: Implement a better way of handling bindings.
 toTerm (C (CBind name)) binds =
   maybe (Left (Undeclared name)) Right (getBinding name binds)
 toTerm (O (OBind name)) binds =

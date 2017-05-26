@@ -12,6 +12,15 @@ data Error = VarNotInContext Nat Context
            | NonQuantTypeApplied Term Term
            deriving (Eq, Show)
 
+ppError :: Error -> String
+ppError (VarNotInContext index context) = "Variable " ++ show index
+  ++ " not in context " ++ ppContext context
+ppError (TypeMismatch t1 t2) = "Got " ++ ppTerm t2 ++ " when expecting " ++ ppTerm t1
+ppError (NonQuantTypeApplied t1 t2) = "Non quantified type " ++ ppTerm t1
+  ++ " applied to " ++ ppTerm t2
+
+
+
 
 checkTerm :: Term -> Context -> Either Error Term
 checkTerm (C c) context = fmap C (checkContext c context)

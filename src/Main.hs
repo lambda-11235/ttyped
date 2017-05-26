@@ -41,7 +41,7 @@ repl binds =
 
                     Right term ->
                       case checkTerm term Star of
-                        Left err -> putStrLn ("Type Error: " ++ show err)
+                        Left err -> putStrLn ("Type Error: " ++ ppError err)
 
                         Right typ ->
                           let e = reduceTerm term in
@@ -53,7 +53,7 @@ repl binds =
 
                     Right obj ->
                       case checkObject obj Star of
-                        Left err -> putStrLn ("Type Error: " ++ show err)
+                        Left err -> putStrLn ("Type Error: " ++ ppError err)
 
                         Right typ ->
                           let o = reduceObject obj in
@@ -79,7 +79,7 @@ loadFile binds file = do contents <- readFile file
 
         Right term ->
           case checkTerm term Star of
-            Left err -> error ("Type Error (" ++ file ++ "): " ++ show err)
+            Left err -> error ("Type Error (" ++ file ++ "): " ++ ppError err)
 
             Right typ ->
               let t = reduceTerm term in
