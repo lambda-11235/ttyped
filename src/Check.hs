@@ -84,11 +84,11 @@ checkApply (Pi ta tb) tc e =
 checkApply e1 e2 _ = Left (NonPiTypeApplied e1 e2)
 
 
--- | Determines if an element of a type given by the first argument can be
--- used where the type given by the second argument is expected.
+-- | Determines if an element of a type given by the first argument can be used
+-- where the type given by the second argument is expected.
 subType :: Expr -> Expr -> Either Error ()
 subType u1@(Universe n) u2@(Universe m) =
   if n <= m then return () else Left (NotSubType u1 u2)
 subType (Pi t1 t2) (Pi t3 t4) = subType t3 t1 >> subType t2 t4
--- TODO: Determine is subtyping is correct.
+-- TODO: Determine if subtyping is correct.
 subType t1 t2 = if t1 == t2 then return () else  Left (NotSubType t1 t2)
