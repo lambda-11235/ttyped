@@ -1,73 +1,82 @@
 
-module Representation ( Level
-                      , Index
-                      , Nat
-                      , Expr (..)
-                      , FinExpr (..)
-                      , incIndices
-                      , ppExpr)
-  where
+module Representation where
 
 import Data.Word
 
 
-type Level = Word64
-type Index = Word64
 type Nat = Word64
 
 
-data Expr = Universe Level
-          | Pi Expr Expr
-          | Lambda Expr Expr
-          | Apply Expr Expr
-          | Var Index
-          | F FinExpr
+data Term = C Context
+          | O Object
           deriving (Eq, Show)
 
-data FinExpr = FinType Nat
-             | Fin Nat Nat
-             -- FinElim last argument is optionally the type and cases it's
-             -- applied to.
-             | FinElim Nat Level (Maybe (Expr, [Expr]))
+
+data Context = Star
+             | Quant Term Context
              deriving (Eq, Show)
 
+contextLength :: Context -> Nat
+contextLength Star = 0
+contextLength (Quant _ c) = 1 + contextLength c
 
-incIndices :: Expr -> Expr
-incIndices e = incIndices' e 0
-  where
-    incIndices' u@(Universe _) _ = u
-    incIndices' (Pi arg body) idx =
-      Pi (incIndices' arg idx) (incIndices' body (idx + 1))
-    incIndices' (Lambda arg body) idx =
-      Lambda (incIndices' arg idx) (incIndices' body (idx + 1))
-    incIndices' (Apply e1 e2) idx =
-      Apply (incIndices' e1 idx) (incIndices' e2 idx)
-    incIndices' (Var index) idx =
-      if index < idx then Var index else Var (index + 1)
-    incIndices' (F finExpr) idx = F (incFinExpr finExpr idx)
+concatContext :: Context -> Context -> Context
+concatContext Star c = c
+concatContext (Quant t c1) c2 = Quant t (concatContext c1 c2)
 
-    incFinExpr ft@(FinType _) _ = ft
-    incFinExpr f@(Fin _ _) _ = f
-    incFinExpr fe@(FinElim _ _ Nothing) _ = fe
-    incFinExpr (FinElim n l (Just (t, cs))) idx =
-      let ii x = incIndices' x idx
-          t' = ii t
-          cs' = map ii cs
-       in FinElim n l (Just (t', cs'))
+concatTerm :: Context -> Term -> Context
+concatTerm c t = concatContext c (Quant t Star)
+
+mapContext :: (Term -> Term) -> Context -> Context
+mapContext f Star = Star
+mapContext f (Quant t c) = Quant (f t) (mapContext f c)
 
 
-ppExpr :: Expr -> String
-ppExpr (Universe level) =
-  '*' : (if level == 0 then "" else "{" ++ (show level) ++ "}")
-ppExpr (Pi arg body) = "(Π " ++ (ppExpr arg) ++ ". " ++ (ppExpr body) ++ ")"
-ppExpr (Lambda arg body) = "(λ " ++ (ppExpr arg) ++ ". " ++ (ppExpr body) ++ ")"
-ppExpr (Apply e1 e2) = "(" ++ (ppExpr e1) ++ " " ++ (ppExpr e2) ++ ")"
-ppExpr (Var index) = show index
-ppExpr (F finExpr) = ppFinExpr finExpr
+data Object = Var Nat
+            | Prod Term Object
+            | Fun Term Object
+            | App Object Object
+            deriving (Eq, Show)
 
-ppFinExpr (FinType n) = "F[" ++ show n ++ "]"
-ppFinExpr (Fin n t) = "[" ++ show n ++ "," ++ show t ++ "]"
-ppFinExpr (FinElim n l Nothing) = "finElim[" ++ show n ++ "," ++ show l ++ "]"
-ppFinExpr (FinElim n l (Just (t, cs))) =
-  let inner = "(" ++ (ppFinExpr (FinElim n l Nothing)) ++ " " ++ ppExpr t ++ ")" in
-    foldl (\r e -> "(" ++ r ++ " " ++ ppExpr e ++ ")") inner cs
+
+addTerm :: Nat -> Term -> Term
+addTerm n t = addTerm' n t 0
+
+addContext :: Nat -> Context -> Context
+addContext n t = addContext' n t 0
+
+addObject :: Nat -> Object -> Object
+addObject n t = addObject' n t 0
+
+
+addTerm' n (C c) idx = C (addContext' n c idx)
+addTerm' n (O o) idx = O (addObject' n o idx)
+
+
+addContext' _ Star _ = Star
+addContext' n (Quant t c) idx =
+  Quant (addTerm' n t idx) (addContext' n c (idx + 1))
+
+
+addObject' n (Var index) idx =
+  if index < idx then Var index else Var (index + n)
+addObject' n (Prod t o) idx =
+  Prod (addTerm' n t idx) (addObject' n o (idx + 1))
+addObject' n (Fun t o) idx =
+  Fun (addTerm' n t idx) (addObject' n o (idx + 1))
+addObject' n (App o1 o2) idx = App (addObject' n o1 idx) (addObject' n o2 idx)
+
+
+ppTerm :: Term -> String
+ppTerm (C c) = ppContext c
+ppTerm (O o) = ppObject o
+
+ppContext :: Context -> String
+ppContext Star = "*"
+ppContext (Quant t c) = "(∀" ++ ppTerm t ++ ". " ++ ppContext c ++ ")"
+
+ppObject :: Object -> String
+ppObject (Var index) = show index
+ppObject (Prod t c) = "(∀" ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
+ppObject (Fun t c) = "(λ" ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
+ppObject (App o1 o2) = "(" ++ ppObject o1 ++ " " ++ ppObject o2 ++ ")"

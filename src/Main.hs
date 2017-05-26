@@ -36,30 +36,30 @@ repl binds =
                 Left err -> putStrLn ("Parse Error: " ++ show err)
 
                 Right (Left (A.Binding name ast)) ->
-                  case A.toRepr ast binds of
+                  case A.toTerm ast binds of
                     Left err -> putStrLn ("Binding Error: " ++ show err)
 
-                    Right expr ->
-                      case check expr of
+                    Right term ->
+                      case checkTerm term Star of
                         Left err -> putStrLn ("Type Error: " ++ show err)
 
                         Right typ ->
-                          let e = reduce expr in
+                          let e = reduceTerm term in
                             repl (A.addBinding name e binds)
 
                 Right (Right ast) ->
-                  case A.toRepr ast binds of
+                  case A.toObject ast binds of
                     Left err -> putStrLn ("Binding Error: " ++ show err)
 
-                    Right expr ->
-                      case check expr of
+                    Right obj ->
+                      case checkObject obj Star of
                         Left err -> putStrLn ("Type Error: " ++ show err)
 
                         Right typ ->
-                          let e = reduce expr in
-                            do putStr (ppExpr e)
+                          let o = reduceObject obj in
+                            do putStr (ppObject o)
                                putStr " : "
-                               putStrLn (ppExpr typ)
+                               putStrLn (ppTerm typ)
 
             repl binds
 
@@ -74,13 +74,13 @@ loadFile binds file = do contents <- readFile file
                            Right bs -> return (foldl add' binds bs)
   where
     add' binds (A.Binding name ast) =
-      case A.toRepr ast binds of
+      case A.toTerm ast binds of
         Left err -> error ("Binding Error (" ++ file ++ "): " ++ show err)
 
-        Right expr ->
-          case check expr of
+        Right term ->
+          case checkTerm term Star of
             Left err -> error ("Type Error (" ++ file ++ "): " ++ show err)
 
             Right typ ->
-              let e = reduce expr in
-                A.addBinding name e binds
+              let t = reduceTerm term in
+                A.addBinding name t binds

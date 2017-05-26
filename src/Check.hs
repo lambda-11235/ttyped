@@ -7,88 +7,60 @@ import Representation
 import Data.Foldable (foldlM, foldrM)
 
 
-type Env = [Expr]
-
-
-data Error = NotAUniverse Expr
-           | UnboundVar Index
-           | NotSubType Expr Expr
-           | NonPiTypeApplied Expr Expr
-           | FinToLarge FinExpr
+data Error = VarNotInContext Nat Context
+           | TypeMismatch Term Term
+           | NonQuantTypeApplied Term Term
            deriving (Eq, Show)
 
 
--- | Type check an expression, returning its type.
-check :: Expr -> Either Error Expr
-check e = check' e []
+checkTerm :: Term -> Context -> Either Error Term
+checkTerm (C c) context = fmap C (checkContext c context)
+checkTerm (O o) context = checkObject o context
 
 
-check' :: Expr -> Env -> Either Error Expr
-check' (Universe level) _ = return (Universe (level + 1))
-check' (Pi ta tb) env =
-  do tat <- check' ta env
-     let ta' = reduce ta
-     tbt <- check' tb (map incIndices (ta' : env))
-     maxUniverse tat tbt
-check' (Lambda t b) env =
-  do tt <- check' t env
-     isUniverse tt
-     let t' = reduce t
-     bt <- check' b (map incIndices (t' : env))
-     return (Pi t' bt)
-check' (Apply e1 e2) env =
-  do e1t <- check' e1 env
-     e2t <- check' e2 env
-     checkApply e1t e2t e2
-check' (Var index) env = if (fromIntegral index) < (length env)
-                            then return (env !! (fromIntegral index))
-                         else Left (UnboundVar index)
-check' (F finExpr) env = checkFinExpr finExpr env
+-- Returns itself if there's no error.
+checkContext :: Context -> Context -> Either Error Context
+checkContext Star _ = return Star
+checkContext (Quant t c) context =
+  do checkTerm t context
+     checkContext c (mapContext (addTerm 1) (concatTerm context t))
+     return (Quant t c)
 
 
-checkFinExpr :: FinExpr -> Env -> Either Error Expr
-checkFinExpr (FinType _) _ = return (Universe 0)
-checkFinExpr f@(Fin n t) _ =
-  if n < t then return (F (FinType t)) else Left (FinToLarge f)
-checkFinExpr (FinElim n l Nothing) _ = return (feType n l)
-checkFinExpr (FinElim n l (Just (t, cs))) env =
-  do tt <- check' t env
-     csts <- mapM (\c -> check' c env) cs
-     fet <- checkApply (feType n l) tt t
-     foldlM (\f (t, e) -> checkApply f t e) fet (zip csts cs)
+checkObject :: Object -> Context -> Either Error Term
+checkObject (Var index) context = asSeenFrom index context
+checkObject (Prod t o) context =
+  do checkTerm t context
+     checkObject o (concatTerm context t)
+     return (C Star)
+checkObject (Fun t o) context =
+  do checkTerm t context
+     ot <- checkObject o (concatTerm context t)
+     case ot of
+       (C c) -> return (C (Quant t c))
+       (O o) -> return (O (Prod t o))
+checkObject (App o1 o2) context =
+  do o1t <- checkObject o1 context
+     o2t <- checkObject o2 context
+     checkTerm o1t context
+     checkTerm o2t context
+     checkApply (reduceTerm o1t) (reduceTerm o2t) o2
 
-feType n l = (Pi (Pi (F (FinType n)) (Universe l)) (feType' n 0))
+
+asSeenFrom :: Nat -> Context -> Either Error Term
+asSeenFrom index context =
+  do t <- getTerm index context (contextLength context)
+     return (addTerm (index + 1) t)
   where
-    feType' 0 index = (Pi (F (FinType n)) (Apply (Var (index + 1)) (Var 0)))
-    feType' m index =
-      let argTy = Apply (Var index) (F (Fin (n - m) n))
-          bodyTy = feType' (m - 1) (index + 1)
-      in (Pi argTy bodyTy)
+    getTerm _ Star _ = Left (VarNotInContext index context)
+    getTerm index (Quant t c) len =
+      if index == (len - 1) then return t
+      else getTerm index c (len - 1)
 
 
-maxUniverse :: Expr -> Expr -> Either Error Expr
-maxUniverse (Universe n) (Universe m) = return (Universe (max n m))
-maxUniverse (Universe _) e = Left (NotAUniverse e)
-maxUniverse e _ = Left (NotAUniverse e)
-
-
-isUniverse :: Expr -> Either Error ()
-isUniverse (Universe n) = return ()
-isUniverse e = Left (NotAUniverse e)
-
-
-checkApply :: Expr -> Expr -> Expr -> Either Error Expr
-checkApply (Pi ta tb) tc e =
-  do subType tc ta
-     return (reduce (subst tb e))
-checkApply e1 e2 _ = Left (NonPiTypeApplied e1 e2)
-
-
--- | Determines if an element of a type given by the first argument can be used
--- where the type given by the second argument is expected.
-subType :: Expr -> Expr -> Either Error ()
-subType u1@(Universe n) u2@(Universe m) =
-  if n <= m then return () else Left (NotSubType u1 u2)
-subType (Pi t1 t2) (Pi t3 t4) = subType t3 t1 >> subType t2 t4
--- TODO: Determine if subtyping is correct.
-subType t1 t2 = if t1 == t2 then return () else  Left (NotSubType t1 t2)
+checkApply :: Term -> Term -> Object -> Either Error Term
+checkApply (C (Quant t1 c)) t2 o =
+  if t1 == t2 then return (C (substContext c o)) else Left (TypeMismatch t1 t2)
+checkApply (O (Prod t1 o1)) t2 o2 =
+  if t1 == t2 then return (O (substObject o1 o2)) else Left (TypeMismatch t1 t2)
+checkApply t1 t2 _ = Left (NonQuantTypeApplied t1 t2)

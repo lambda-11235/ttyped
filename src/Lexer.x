@@ -1,5 +1,7 @@
 {
 module Lexer (Token (..), LexOut (..), scan) where
+
+import Representation (Nat)
 }
 
 %wrapper "posn"
@@ -12,25 +14,15 @@ tokens :-
   $white+                               ;
   "#".*                                 ;
 
-  "{"                                   { \p s -> lexOut p LLBracket }
-  "}"                                   { \p s -> lexOut p LRBracket }
-
   "("                                   { \p s -> lexOut p LLParen }
   ")"                                   { \p s -> lexOut p LRParen }
 
-  "["                                   { \p s -> lexOut p LLSquare }
-  "]"                                   { \p s -> lexOut p LRSquare }
-
-  ","                                   { \p s -> lexOut p LComma }
   "."                                   { \p s -> lexOut p LDot }
 
   "="                                   { \p s -> lexOut p LEqual }
 
-  "F"                                   { \p s -> lexOut p LF }
-  "finElim"                             { \p s -> lexOut p LFinElim }
-
-  "||"                                  { \p s -> lexOut p LPi }
-  "Π"                                   { \p s -> lexOut p LPi }
+  "@"                                  { \p s -> lexOut p LForall }
+  "∀"                                   { \p s -> lexOut p LForall }
 
   "\"                                   { \p s -> lexOut p LLambda }
   "λ"                                   { \p s -> lexOut p LLambda }
@@ -41,21 +33,14 @@ tokens :-
   @char+                                { \p s -> lexOut p (LSym s) }
 
 {
-data Token = LLBracket
-           | LRBracket
-           | LLParen
+data Token = LLParen
            | LRParen
-           | LLSquare
-           | LRSquare
-           | LComma
            | LDot
            | LEqual
-           | LF
-           | LFinElim
+           | LForall
            | LLambda
-           | LPi
            | LStar
-           | LNumber Int
+           | LNumber Nat
            | LSym String
            deriving (Eq, Show)
 

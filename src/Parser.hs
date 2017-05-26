@@ -2,6 +2,7 @@ module Parser where
 
 import AST
 import Lexer
+import Representation (Nat)
 
 import Text.Parsec.Combinator
 import Text.Parsec.Error
@@ -17,7 +18,7 @@ match tok = tokenPrim (show . getToken) pos (match' . getToken)
   where
     match' x = if x == tok then Just () else Nothing
 
-number :: Parser Int
+number :: Parser Nat
 number = tokenPrim (show . getToken) pos (match' . getToken)
   where
     match' (LNumber n) = Just n
@@ -33,9 +34,12 @@ pos :: (SourcePos -> LexOut -> [LexOut] -> SourcePos)
 pos oldPos (LexOut _ line col _) _ = newPos (sourceName oldPos) line col
 
 
+-- * Grammar
+-- TODO: removes try's.
+
 -- | A top level entry in the REPL.
-topREPL :: Parser (Either Binding Expr)
-topREPL = (try (fmap Left binding) <|> fmap Right expr) <* eof
+topREPL :: Parser (Either Binding Object)
+topREPL = (try (fmap Left binding) <|> fmap Right object) <* eof
 
 
 bindings :: Parser [Binding]
@@ -44,69 +48,47 @@ bindings = many binding
 binding :: Parser Binding
 binding = do name <- sym
              match LEqual
-             e <- expr
-             return (Binding name e)
+             t <- term
+             return (Binding name t)
 
 
-expr :: Parser Expr
-expr = universe <|> parened <|> (fmap (Var . fromIntegral) number)
-  <|> (fmap F finExpr)
-  <|> (fmap Bind sym)
+term :: Parser Term
+term = try (C <$> context) <|> (O <$> object)
 
-universe = do match LStar
-              ml <- optionMaybe level
-              case ml of
-                Just l -> return (Universe l)
-                Nothing -> return (Universe 0)
-  where
-    level = do match LLBracket
-               l <- number
-               match LRBracket
-               return (fromIntegral l)
+
+context :: Parser Context
+context = (match LStar *> pure Star) <|> quant <|> (CBind <$> sym)
+
+quant = do match LLParen
+           match LForall
+           t <- term
+           match LDot
+           c <- context
+           match LRParen
+           return (Quant t c)
+
+
+object :: Parser Object
+object = parened <|> (Var <$> number) <|> (OBind <$> sym)
 
 -- NOTE: This is necessary to avoid backtracking.
 parened = do match LLParen
-             e <- piP <|> lambda <|> apply
+             e <- prod <|> fun <|> app
              match LRParen
              return e
 
-piP = do match LPi
-         argTyp <- expr
+prod = do match LForall
+          t <- term
+          match LDot
+          o <- object
+          return (Prod t o)
+
+fun = do match LLambda
+         t <- term
          match LDot
-         body <- expr
-         return (Pi argTyp body)
+         o <- object
+         return (Fun t o)
 
-lambda = do match LLambda
-            argTyp <- expr
-            match LDot
-            body <- expr
-            return (Lambda argTyp body)
-
-apply = do e1 <- expr
-           e2 <- expr
-           return (Apply e1 e2)
-
-
-finExpr :: Parser FinExpr
-finExpr = finType <|> fin <|> finElim
-
-finType = do match LF
-             match LLSquare
-             n <- fmap fromIntegral number
-             match LRSquare
-             return (FinType n)
-
-fin = do match LLSquare
-         n <- fmap fromIntegral number
-         match LComma
-         t <- fmap fromIntegral number
-         match LRSquare
-         return (Fin n t)
-
-finElim = do match LFinElim
-             match LLSquare
-             n <- fmap fromIntegral number
-             match LComma
-             l <- fmap fromIntegral number
-             match LRSquare
-             return (FinElim n l)
+app = do o1 <- object
+         o2 <- object
+         return (App o1 o2)

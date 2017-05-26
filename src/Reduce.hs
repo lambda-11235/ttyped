@@ -1,58 +1,59 @@
 
-module Reduce (reduce, subst) where
+module Reduce ( reduceTerm
+              , reduceObject
+              , substObject
+              , substTerm
+              , substContext)
+                where
 
 import Representation
 
--- | Reduces a type checked expression to normal form.
-reduce :: Expr -> Expr
-reduce (Universe level) = Universe level
-reduce (Pi ta tb) = Pi (reduce ta) (reduce tb)
-reduce (Lambda t b) = Lambda (reduce t) (reduce b)
-reduce (Apply e1 e2) = apply (reduce e1) (reduce e2)
-reduce (Var index) = Var index
-reduce fe@(F _) = fe
+reduceTerm :: Term -> Term
+reduceTerm (C c) = C (mapContext reduceTerm c)
+reduceTerm (O o) = O (reduceObject o)
 
 
-apply :: Expr -> Expr -> Expr
-apply (Lambda t b) e = reduce (subst b e)
-apply (F finExpr) e = applyFinExpr finExpr e
-apply e1 e2 = Apply e1 e2
-
-applyFinExpr :: FinExpr -> Expr -> Expr
-applyFinExpr (FinElim n l Nothing) t = F (FinElim n l (Just (t, [])))
-applyFinExpr fe@(FinElim n l (Just (t, cs))) e =
-  if length cs < fromIntegral n then F (FinElim n l (Just (t, cs ++ [e]))) else
-  case e of
-    (F (Fin m _)) -> cs !! (fromIntegral m)
-    _ -> Apply (F fe) e
-applyFinExpr fe e = Apply (F fe) e
+reduceObject :: Object -> Object
+reduceObject v@(Var _) = v
+reduceObject (Prod t o) = Prod (reduceTerm t) (reduceObject o)
+reduceObject (Fun t o) = Fun (reduceTerm t) (reduceObject o)
+reduceObject (App o1 o2) = apply (reduceObject o1) (reduceObject o2)
 
 
--- | Substitutes the second argument into the first assuming the first is a body
--- of a Lambda or Pi abstraction.
-subst :: Expr -> Expr -> Expr
-subst e1 e2 = subst' e1 e2 0
-  where
-    subst' u@(Universe level) _ _ = u
-    subst'(Pi ta tb) e idx =
-      let ta' = subst' ta e idx
-          tb' = subst' tb (incIndices e) (idx + 1)
-      in Pi ta' tb'
-    subst'(Lambda t b) e idx =
-      let t' = subst' t e idx
-          b' = subst' b (incIndices e) (idx + 1)
-      in Lambda t' b'
-    subst'(Apply e1 e2) e idx =
-      let e1' = subst' e1 e idx
-          e2' = subst' e2 e idx
-      in Apply e1' e2'
-    subst' (Var index) e idx = if index == idx then e
-                               else if index > idx then Var (pred index)
-                               else Var index
-    subst' (F finExpr) e idx = F (substFin finExpr e idx)
+apply :: Object -> Object -> Object
+apply (Fun _ b) o = reduceObject (substObject b o)
+apply o1 o2 = App o1 o2
 
-    substFin ft@(FinType _) _ _ = ft
-    substFin f@(Fin _ _) _ _ = f
-    substFin fe@(FinElim _ _ Nothing) _ _ = fe
-    substFin (FinElim n l (Just (t, cs))) e idx =
-      FinElim n l (Just (subst' t e idx, map (\c -> subst' c e idx) cs))
+
+substObject :: Object -> Object -> Object
+substObject o1 o2 = substObject' o1 o2 0
+
+substTerm :: Term -> Object -> Term
+substTerm t o = substTerm' t o 0
+
+substContext :: Context -> Object -> Context
+substContext t o = substContext' t o 0
+
+
+substObject' (Var index) o idx = if index == idx then o
+                           else if index > idx then Var (index - 1)
+                           else Var index
+substObject' (Prod t b) o idx =
+  let t' = substTerm' t o idx
+      b' = substObject' b (addObject 1 o) (idx + 1)
+  in Prod t' b'
+substObject' (Fun t b) o idx =
+  let t' = substTerm' t o idx
+      b' = substObject' b (addObject 1 o) (idx + 1)
+  in Fun t' b'
+substObject' (App o1 o2) o3 idx =
+  let o1' = substObject' o1 o3 idx
+      o2' = substObject' o2 o3 idx
+  in App o1' o2'
+
+substTerm' (C c) o idx = C (substContext' c o idx)
+substTerm' (O o1) o2 idx = O (substObject' o1 o2 idx)
+
+substContext' Star o idx = Star
+substContext' (Quant t c) o idx =
+  Quant (substTerm' t o idx) (substContext' c o (idx + 1))
