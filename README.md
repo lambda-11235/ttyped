@@ -68,13 +68,36 @@ See "The Calculus of Constructions" by Coquand and Huet.
 ```
 > stack build
 > stack exec ttyped
+
+λ> id = (\*. (\0. 0))
+λ> id
+(λ*. (λ0. 0)) : (∀*. (∀0. 1))
+λ> idT = (@*. (@0. 1))
+λ> (id idT)
+(λ(∀*. (∀0. 1)). 0) : (∀(∀*. (∀0. 1)). (∀*. (∀0. 1)))
+λ> ((id idT) id)
+(λ*. (λ0. 0)) : (∀*. (∀0. 1))
 ```
 
 Files that contain bindings can also be preloaded.
 
 ```
-> stack exec ttyped lib/base.tt
+> stack exec ttyped lib/base.tt lib/nat.tt
+
+λ> id
+(λ*. (λ0. 0)) : (∀*. (∀0. 1))
+λ> const
+(λ*. (λ0. (λ*. (λ0. 2)))) : (∀*. (∀0. (∀*. (∀0. 3))))
+λ> ((add two) three)
+(λ*. (λ(∀0. 1). (λ1. (1 (1 (1 (1 (1 0)))))))) : (∀*. (∀(∀0. 1). (∀1. 2)))
+λ> five
+(λ*. (λ(∀0. 1). (λ1. (1 (1 (1 (1 (1 0)))))))) : (∀*. (∀(∀0. 1). (∀1. 2)))
+λ> ((mult three) three)
+(λ*. (λ(∀0. 1). (λ1. (1 (1 (1 (1 (1 (1 (1 (1 (1 0)))))))))))) : (∀*. (∀(∀0. 1). (∀1. 2)))
+λ> nine
+(λ*. (λ(∀0. 1). (λ1. (1 (1 (1 (1 (1 (1 (1 (1 (1 0)))))))))))) : (∀*. (∀(∀0. 1). (∀1. 2)))
 ```
 
 ## TODO
 
+- Add better AST conversion and type errors.

@@ -38,8 +38,8 @@ pos oldPos (LexOut _ line col _) _ = newPos (sourceName oldPos) line col
 -- TODO: removes try's.
 
 -- | A top level entry in the REPL.
-topREPL :: Parser (Either Binding Object)
-topREPL = (try (fmap Left binding) <|> fmap Right object) <* eof
+topREPL :: Parser (Either Binding AST)
+topREPL = (try (fmap Left binding) <|> fmap Right ast) <* eof
 
 
 bindings :: Parser [Binding]
@@ -48,47 +48,31 @@ bindings = many binding
 binding :: Parser Binding
 binding = do name <- sym
              match LEqual
-             t <- term
+             t <- ast
              return (Binding name t)
 
 
-term :: Parser Term
-term = try (C <$> context) <|> (O <$> object)
-
-
-context :: Parser Context
-context = (match LStar *> pure Star) <|> quant <|> (CBind <$> sym)
-
-quant = do match LLParen
-           match LForall
-           t <- term
-           match LDot
-           c <- context
-           match LRParen
-           return (Quant t c)
-
-
-object :: Parser Object
-object = parened <|> (Var <$> number) <|> (OBind <$> sym)
+ast :: Parser AST
+ast = (match LStar *> pure Star) <|> parened <|> (Var <$> number) <|> (Bind <$> sym)
 
 -- NOTE: This is necessary to avoid backtracking.
 parened = do match LLParen
-             e <- prod <|> fun <|> app
+             e <- quant <|> fun <|> app
              match LRParen
              return e
 
-prod = do match LForall
-          t <- term
-          match LDot
-          o <- object
-          return (Prod t o)
+quant = do match LForall
+           t <- ast
+           match LDot
+           b <- ast
+           return (Quant t b)
 
 fun = do match LLambda
-         t <- term
+         t <- ast
          match LDot
-         o <- object
-         return (Fun t o)
+         b <- ast
+         return (Fun t b)
 
-app = do o1 <- object
-         o2 <- object
+app = do o1 <- ast
+         o2 <- ast
          return (App o1 o2)

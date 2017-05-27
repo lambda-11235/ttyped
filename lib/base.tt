@@ -11,8 +11,7 @@ pairType = (\*. (\*. (@*. (@(@2. (@2. 2)). 1))))
 
 botType = (@*. 0)
 
-# Errors with NotAContext, see FIXME notice in src/AST.hs
-#not = (@*. botType)
+not = (\*. (@0. botType))
 
 unitType = idT
 unit = id

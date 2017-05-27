@@ -19,58 +19,57 @@ getBinding :: String -> Bindings -> Maybe R.Term
 getBinding name (Bindings bs) = M.lookup name bs
 
 
-data BindingError = NotAContext String R.Object
-                  | NotAObject String R.Context
-                  | Undeclared String
+data Binding = Binding String AST
   deriving (Eq, Show)
 
 
-data Binding = Binding String Term
-  deriving (Eq, Show)
+data AST = Star
+         | Quant AST AST
+         | Var R.Nat
+         | Fun AST AST
+         | App AST AST
+         | Bind String
+         deriving (Eq, Show)
 
 
-data Term = C Context
-          | O Object
-          deriving (Eq, Show)
-
-data Context = Star
-             | Quant Term Context
-             | CBind String
-             deriving (Eq, Show)
-
-data Object = Var R.Nat
-            | Prod Term Object
-            | Fun Term Object
-            | App Object Object
-            | OBind String
-            deriving (Eq, Show)
+data ConversionError = NotAContext R.Object
+                     | NotAObject R.Context
+                     | Undeclared String
+                     deriving (Eq, Show)
 
 
-toTerm :: Term -> Bindings -> Either BindingError R.Term
--- TODO: Implement a better way of handling bindings.
-toTerm (C (CBind name)) binds =
-  maybe (Left (Undeclared name)) Right (getBinding name binds)
-toTerm (O (OBind name)) binds =
-  maybe (Left (Undeclared name)) Right (getBinding name binds)
-toTerm (C c) binds = R.C <$> (toContext c binds)
-toTerm (O o) binds = R.O <$> (toObject o binds)
-
-toContext :: Context -> Bindings -> Either BindingError R.Context
-toContext Star _ = pure R.Star
-toContext (Quant t c) binds = R.Quant <$> (toTerm t binds) <*> (toContext c binds)
-toContext (CBind name) binds =
+toTerm :: AST -> Bindings -> Either ConversionError R.Term
+toTerm Star _ = return (R.C R.Star)
+toTerm (Quant t b) binds =
+  do t' <- toTerm t binds
+     b' <- toTerm b binds
+     case b' of
+       (R.C c) -> return (R.C (R.Quant t' c))
+       (R.O o) -> return (R.O (R.Prod t' o))
+toTerm (Var index) _ = return (R.O (R.Var index))
+toTerm (Fun t b) binds =
+  do b' <- toTerm b binds
+     R.O <$> (R.Fun <$> (toTerm t binds) <*> (assertObject b'))
+toTerm (App o1 o2) binds =
+  do o1' <- toTerm o1 binds
+     o2' <- toTerm o2 binds
+     R.O <$> (R.App <$> (assertObject o1') <*> (assertObject o2'))
+toTerm (Bind name) binds =
   case getBinding name binds of
     Nothing -> Left (Undeclared name)
-    Just (R.C c) -> pure c
-    Just (R.O o) -> Left (NotAContext name o)
+    Just t -> return t
 
-toObject :: Object -> Bindings -> Either BindingError R.Object
-toObject (Var index) _ = pure (R.Var index)
-toObject (Prod t b) binds = R.Prod <$> (toTerm t binds) <*> (toObject b binds)
-toObject (Fun t b) binds = R.Fun <$> (toTerm t binds) <*> (toObject b binds)
-toObject (App o1 o2) binds = R.App <$> (toObject o1 binds) <*> (toObject o2 binds)
-toObject (OBind name) binds =
-  case getBinding name binds of
-    Nothing -> Left (Undeclared name)
-    Just (R.C c) -> Left (NotAObject name c)
-    Just (R.O o) -> pure o
+toContext :: AST -> Bindings -> Either ConversionError R.Context
+toContext ast binds = toTerm ast binds >>= assertContext
+
+toObject :: AST -> Bindings -> Either ConversionError R.Object
+toObject ast binds = toTerm ast binds >>= assertObject
+
+
+assertContext :: R.Term -> Either ConversionError R.Context
+assertContext (R.C c) = return c
+assertContext (R.O o) = Left (NotAContext o)
+
+assertObject :: R.Term -> Either ConversionError R.Object
+assertObject (R.C c) = Left (NotAObject c)
+assertObject (R.O o) = return o
