@@ -33,7 +33,7 @@ checkContext Star _ = return Star
 checkContext (Quant t c) context =
   do checkTerm t context
      checkContext c (concatTerm context t)
-     return (Quant t c)
+     return (Quant (reduceTerm t) (reduceContext c))
 
 
 checkObject :: Object -> Context -> Either Error Term
@@ -45,9 +45,10 @@ checkObject (Prod t o) context =
 checkObject (Fun t o) context =
   do checkTerm t context
      ot <- checkObject o (concatTerm context t)
+     let t' = reduceTerm t
      case ot of
-       (C c) -> return (C (Quant t c))
-       (O o) -> return (O (Prod t o))
+       (C c) -> return (C (Quant t' (reduceContext c)))
+       (O o) -> return (O (Prod t' (reduceObject o)))
 checkObject (App o1 o2) context =
   do o1t <- checkObject o1 context
      o2t <- checkObject o2 context

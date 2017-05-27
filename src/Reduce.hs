@@ -1,6 +1,7 @@
 
 module Reduce ( reduceTerm
               , reduceObject
+              , reduceContext
               , substObject
               , substTerm
               , substContext)
@@ -9,8 +10,12 @@ module Reduce ( reduceTerm
 import Representation
 
 reduceTerm :: Term -> Term
-reduceTerm (C c) = C (mapContext reduceTerm c)
+reduceTerm (C c) = C (reduceContext c)
 reduceTerm (O o) = O (reduceObject o)
+
+
+reduceContext :: Context -> Context
+reduceContext = mapContext reduceTerm
 
 
 reduceObject :: Object -> Object
