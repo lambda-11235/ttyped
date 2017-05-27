@@ -4,9 +4,13 @@
 TTyped is a dependently typed language Based on the calculus of constructions.
 de Bruijn indices are used for variable identification.
 
+There is also a version based on intuitionistic type theory in the branch
+`martin_lof`.
+
 ## Syntax
 
 Comment lines start with a `#` and extend to the end of the line.
+
 ### EBNF
 
 The core language that the type checker and reduce operate on has the grammar
