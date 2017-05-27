@@ -6,11 +6,6 @@ natType = (@*. (@(@0. 1). (@1. 2)))
 zero = (\*. (\(@0. 1). (\1. 0)))
 succ = (\natType. (\*. (\(@0. 1). (\1. (1 (((3 2) 1) 0))))))
 
-add = (\natType. (\natType. (\*. (\(@0. 1). (\1. (((4 2) 1) (((3 2) 1) 0)))))))
-
-mult = (\natType. (\natType. (\*. (\(@0. 1). (\1.
-  (((4 2) ((3 2) 1)) 0))))))
-
 one = (succ zero)
 two = (succ one)
 three = (succ two)
@@ -20,3 +15,22 @@ six = (succ five)
 seven = (succ six)
 eight = (succ seven)
 nine = (succ eight)
+
+
+add = (\natType. (\natType. (\*. (\(@0. 1). (\1. (((4 2) 1) (((3 2) 1) 0)))))))
+
+mult = (\natType. (\natType. (((1 natType) (add 0)) zero)))
+
+power = (\natType. (\natType. (((0 natType) (mult 1)) one)))
+
+
+# What I'm doing here is passing along a pair with (n, m) that starts at (0, 0).
+# On each iteration we convert it to (n + 1, n). At the end of the iterations we
+# should have (x, p), where x is the passed in number and p is its predecessor.
+PNT = ((pairType natType) natType)
+PN = ((pair natType) natType)
+pred = (\natType. (((((0 PNT)
+                       (\PNT. ((0 PNT) (\natType. (\natType. ((PN (succ 1)) 1))))))
+                       ((PN zero) zero))
+                    natType)
+                   (\natType. (\natType. 0))))
