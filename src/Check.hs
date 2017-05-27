@@ -32,7 +32,7 @@ checkContext :: Context -> Context -> Either Error Context
 checkContext Star _ = return Star
 checkContext (Quant t c) context =
   do checkTerm t context
-     checkContext c (mapContext (addTerm 1) (concatTerm context t))
+     checkContext c (concatTerm context t)
      return (Quant t c)
 
 

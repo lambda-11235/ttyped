@@ -56,4 +56,4 @@ substTerm' (O o1) o2 idx = O (substObject' o1 o2 idx)
 
 substContext' Star o idx = Star
 substContext' (Quant t c) o idx =
-  Quant (substTerm' t o idx) (substContext' c o (idx + 1))
+  Quant (substTerm' t o idx) (substContext' c (addObject 1 o) (idx + 1))
