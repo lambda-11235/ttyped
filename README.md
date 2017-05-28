@@ -169,6 +169,4 @@ u : ut
 
 ## TODO
 
-- Add sigma types.
-- Add sum (disjunctive) types.
-- Add some sort of way of defining inductive data types (W-types maybe?).
+- Add sigma, sum (disjunctive), identity, and well founded types.
