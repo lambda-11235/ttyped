@@ -5,6 +5,9 @@ TTyped is a dependently typed language with cumulative type universes. de Bruijn
 indices are used for variable identification. This implementation also provides
 finite types.
 
+There is also a version based on the calculus of constructions in the branch
+`CoC`.
+
 ## Syntax
 
 Comment lines start with a `#` and extend to the end of the line. Universes are
