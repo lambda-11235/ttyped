@@ -29,5 +29,14 @@ sigma = (\*. (\(@0. *). (\1. (\(1 0).
 
 
 # The identity type for types.
+# To use it correctly you must wrap it in a closure. e.g.
+#
+# ((((\(@*. (@*. *)).    # I
+#    (\(@*. ((1 0) 0)).  # refl
+#    (\(@*. (@*. (@((3 1) 0). ((pairType (@2. 2)) (@1. 3))))).  #Ielim
+#    <body>
+# ))) I) refl) (\*. (\*. (id ((I 1) 0)))))
+#
+# Otherwise alternate definitions for I besides refl could be used.
 I = (\*. (\*. ((pairType (@1. 1)) (@0. 2))))
 refl = (\*. ((((pair (@0. 1)) (@0. 1)) (\0. 0)) (\0. 0)))

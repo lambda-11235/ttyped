@@ -15,6 +15,7 @@ six = (succ five)
 seven = (succ six)
 eight = (succ seven)
 nine = (succ eight)
+ten = (succ nine)
 
 
 add = (\natType. (\natType. (\*. (\(@0. 1). (\1. (((4 2) 1) (((3 2) 1) 0)))))))
