@@ -4,10 +4,10 @@
 # be done in System Fω.
 
 boolTypeT = (@*. (@*. *))
-trueT = (\*. (\*. 1))
-falseT = (\*. (\*. 0))
+trueT = (\*. (\*. 0))
+falseT = (\*. (\*. 1))
 
-isTrueT = (\boolTypeT. ((0 unitType) botType))
+isTrueT = (\boolTypeT. ((0 botType) unitType))
 
 foo = (\boolTypeT. (\(isTrueT 0). 0))
 
