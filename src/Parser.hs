@@ -43,7 +43,7 @@ topREPL = (try (fmap Left binding) <|> fmap Right ast) <* eof
 
 
 bindings :: Parser [Binding]
-bindings = many binding
+bindings = many binding <* eof
 
 binding :: Parser Binding
 binding = do name <- sym
