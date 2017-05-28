@@ -54,7 +54,8 @@ checkObject (App o1 o2) context =
      o2t <- checkObject o2 context
      checkTerm o1t context
      checkTerm o2t context
-     checkApply (reduceTerm o1t) (reduceTerm o2t) o2
+     o3 <- checkApply (reduceTerm o1t) (reduceTerm o2t) o2
+     return (reduceTerm o3)
 
 
 asSeenFrom :: Nat -> Context -> Either Error Term
