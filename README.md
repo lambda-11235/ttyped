@@ -79,6 +79,13 @@ could be.
 `P/e` denotes substitution for the index 0. Also, `*` is short for `*{0}`.
 
 ```
+--------
+ A <: A
+
+ A <: B    B <: C
+------------------
+      A <: C
+
  A <: B    G |- x : A
 ----------------------
       G |- x : B
