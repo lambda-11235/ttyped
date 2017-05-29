@@ -41,8 +41,8 @@ substContext t o = substContext' t o 0
 
 
 substObject' (Var index) o idx = if index == idx then o
-                           else if index > idx then Var (index - 1)
-                           else Var index
+                                 else if index > idx then Var (index - 1)
+                                 else Var index
 substObject' (Prod t b) o idx =
   let t' = substTerm' t o idx
       b' = substObject' b (addObject 1 o) (idx + 1)

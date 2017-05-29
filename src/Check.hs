@@ -27,7 +27,7 @@ checkTerm (C c) context = fmap C (checkContext c context)
 checkTerm (O o) context = checkObject o context
 
 
--- Returns itself if there's no error.
+-- Returns the first argument if there's no error.
 checkContext :: Context -> Context -> Either Error Context
 checkContext Star _ = return Star
 checkContext (Quant t c) context =
@@ -36,6 +36,7 @@ checkContext (Quant t c) context =
      return (Quant (reduceTerm t) (reduceContext c))
 
 
+-- | Returns the type of the object passed in if there's no errors.
 checkObject :: Object -> Context -> Either Error Term
 checkObject (Var index) context = asSeenFrom index context
 checkObject (Prod t o) context =
@@ -58,6 +59,7 @@ checkObject (App o1 o2) context =
      return (reduceTerm o3)
 
 
+-- | Gets the type of a variable as seen from the context.
 asSeenFrom :: Nat -> Context -> Either Error Term
 asSeenFrom index context =
   do t <- getTerm index context (contextLength context)
@@ -69,6 +71,7 @@ asSeenFrom index context =
       else getTerm index c (len - 1)
 
 
+-- | Returns the type of applying some type to another type.
 checkApply :: Term -> Term -> Object -> Either Error Term
 checkApply (C (Quant t1 c)) t2 o =
   if t1 == t2 then return (C (substContext c o)) else Left (TypeMismatch t1 t2)
