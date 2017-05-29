@@ -20,61 +20,37 @@ ppError (NonQuantTypeApplied t1 t2) = "Non quantified type " ++ ppTerm t1
   ++ " applied to " ++ ppTerm t2
 
 
-
-
+-- | Returns the type of the term passed in if there's no errors.
 checkTerm :: Term -> Context -> Either Error Term
-checkTerm (C c) context = fmap C (checkContext c context)
-checkTerm (O o) context = checkObject o context
-
-
--- Returns the first argument if there's no error.
-checkContext :: Context -> Context -> Either Error Context
-checkContext Star _ = return Star
-checkContext (Quant t c) context =
-  do checkTerm t context
-     checkContext c (concatTerm context t)
-     return (Quant (reduceTerm t) (reduceContext c))
-
-
--- | Returns the type of the object passed in if there's no errors.
-checkObject :: Object -> Context -> Either Error Term
-checkObject (Var index) context = asSeenFrom index context
-checkObject (Prod t o) context =
-  do checkTerm t context
-     checkObject o (concatTerm context t)
-     return (C Star)
-checkObject (Fun t o) context =
-  do checkTerm t context
-     ot <- checkObject o (concatTerm context t)
-     let t' = reduceTerm t
-     case ot of
-       (C c) -> return (C (Quant t' (reduceContext c)))
-       (O o) -> return (O (Prod t' (reduceObject o)))
-checkObject (App o1 o2) context =
-  do o1t <- checkObject o1 context
-     o2t <- checkObject o2 context
-     checkTerm o1t context
-     checkTerm o2t context
-     o3 <- checkApply (reduceTerm o1t) (reduceTerm o2t) o2
-     return (reduceTerm o3)
+checkTerm Star _ = return Star
+checkTerm (Var index) context = asSeenFrom index context
+checkTerm (Prod t1 t2) context =
+  do checkTerm t1 context
+     checkTerm t2 (insertTerm context (reduceTerm t1))
+     return Star
+checkTerm (Fun t1 t2) context =
+  do checkTerm t1 context
+     t2t <- checkTerm t2 (insertTerm context (reduceTerm t1))
+     return (Prod (reduceTerm t1) t2t)
+checkTerm (App t1 t2) context =
+  do t1t <- checkTerm t1 context
+     t2t <- checkTerm t2 context
+     checkTerm t1t context
+     checkTerm t2t context
+     t3 <- checkApply (reduceTerm t1t) (reduceTerm t2t) t2
+     return (reduceTerm t3)
 
 
 -- | Gets the type of a variable as seen from the context.
 asSeenFrom :: Nat -> Context -> Either Error Term
 asSeenFrom index context =
-  do t <- getTerm index context (contextLength context)
-     return (addTerm (index + 1) t)
-  where
-    getTerm _ Star _ = Left (VarNotInContext index context)
-    getTerm index (Quant t c) len =
-      if index == (len - 1) then return t
-      else getTerm index c (len - 1)
+  if index < contextLength context
+  then return (addTerm (index + 1) (context !! (fromIntegral index)))
+  else Left (VarNotInContext index context)
 
 
 -- | Returns the type of applying some type to another type.
-checkApply :: Term -> Term -> Object -> Either Error Term
-checkApply (C (Quant t1 c)) t2 o =
-  if t1 == t2 then return (C (substContext c o)) else Left (TypeMismatch t1 t2)
-checkApply (O (Prod t1 o1)) t2 o2 =
-  if t1 == t2 then return (O (substObject o1 o2)) else Left (TypeMismatch t1 t2)
+checkApply :: Term -> Term -> Term -> Either Error Term
+checkApply (Prod t1 t2) t3 t4 =
+  if t1 == t3 then return (substTerm t2 t4) else Left (TypeMismatch t1 t3)
 checkApply t1 t2 _ = Left (NonQuantTypeApplied t1 t2)

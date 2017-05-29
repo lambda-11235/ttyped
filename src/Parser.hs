@@ -57,15 +57,15 @@ ast = (match LStar *> pure Star) <|> parened <|> (Var <$> number) <|> (Bind <$> 
 
 -- NOTE: This is necessary to avoid backtracking.
 parened = do match LLParen
-             e <- quant <|> fun <|> app
+             e <- prod <|> fun <|> app
              match LRParen
              return e
 
-quant = do match LForall
-           t <- ast
-           match LDot
-           b <- ast
-           return (Quant t b)
+prod = do match LForall
+          t <- ast
+          match LDot
+          b <- ast
+          return (Prod t b)
 
 fun = do match LLambda
          t <- ast
@@ -73,6 +73,6 @@ fun = do match LLambda
          b <- ast
          return (Fun t b)
 
-app = do o1 <- ast
-         o2 <- ast
-         return (App o1 o2)
+app = do t1 <- ast
+         t2 <- ast
+         return (App t1 t2)

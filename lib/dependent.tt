@@ -1,21 +1,4 @@
 
-# A demonstration of fully dependent types. The return type of foo and the type
-# of its second argumentdepends on the value of the first argument. This cannot
-# be done in System Fω.
+# A demonstration of fully dependent types.
 
-boolTypeT = (@*. (@*. *))
-trueT = (\*. (\*. 0))
-falseT = (\*. (\*. 1))
-
-isTrueT = (\boolTypeT. ((0 botType) unitType))
-
-foo = (\boolTypeT. (\(isTrueT 0). 0))
-
-
-# Example:
-# λ> (foo falseT)
-# (λ(∀*. 0). 0) : (∀(∀*. 0). (∀*. 0))
-# λ> (foo trueT)
-# (λ(∀*. (∀0. 1)). 0) : (∀(∀*. (∀0. 1)). (∀*. (∀0. 1)))
-# λ> ((foo trueT) unit)
-# (λ*. (λ0. 0)) : (∀*. (∀0. 1))
+foo = (\boolType. (((0 (((0 *) unitType) boolType)) unit) true))

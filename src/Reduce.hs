@@ -1,64 +1,40 @@
 
 module Reduce ( reduceTerm
-              , reduceObject
-              , reduceContext
-              , substObject
-              , substTerm
-              , substContext)
+              , substTerm )
                 where
 
 import Representation
 
 reduceTerm :: Term -> Term
-reduceTerm (C c) = C (reduceContext c)
-reduceTerm (O o) = O (reduceObject o)
+reduceTerm Star = Star
+reduceTerm v@(Var _) = v
+reduceTerm (Prod t1 t2) = Prod (reduceTerm t1) (reduceTerm t2)
+reduceTerm (Fun t1 t2) = Fun (reduceTerm t1) (reduceTerm t2)
+reduceTerm (App t1 t2) = apply (reduceTerm t1) (reduceTerm t2)
 
 
-reduceContext :: Context -> Context
-reduceContext = mapContext reduceTerm
+apply :: Term -> Term -> Term
+apply (Fun _ b) t = reduceTerm (substTerm b t)
+apply t1 t2 = App t1 t2
 
 
-reduceObject :: Object -> Object
-reduceObject v@(Var _) = v
-reduceObject (Prod t o) = Prod (reduceTerm t) (reduceObject o)
-reduceObject (Fun t o) = Fun (reduceTerm t) (reduceObject o)
-reduceObject (App o1 o2) = apply (reduceObject o1) (reduceObject o2)
+substTerm :: Term -> Term -> Term
+substTerm t1 t2 = substTerm' t1 t2 0
 
 
-apply :: Object -> Object -> Object
-apply (Fun _ b) o = reduceObject (substObject b o)
-apply o1 o2 = App o1 o2
-
-
-substObject :: Object -> Object -> Object
-substObject o1 o2 = substObject' o1 o2 0
-
-substTerm :: Term -> Object -> Term
-substTerm t o = substTerm' t o 0
-
-substContext :: Context -> Object -> Context
-substContext t o = substContext' t o 0
-
-
-substObject' (Var index) o idx = if index == idx then o
+substTerm' Star _ _ = Star
+substTerm' (Var index) t idx = if index == idx then t
                                  else if index > idx then Var (index - 1)
                                  else Var index
-substObject' (Prod t b) o idx =
-  let t' = substTerm' t o idx
-      b' = substObject' b (addObject 1 o) (idx + 1)
-  in Prod t' b'
-substObject' (Fun t b) o idx =
-  let t' = substTerm' t o idx
-      b' = substObject' b (addObject 1 o) (idx + 1)
-  in Fun t' b'
-substObject' (App o1 o2) o3 idx =
-  let o1' = substObject' o1 o3 idx
-      o2' = substObject' o2 o3 idx
-  in App o1' o2'
-
-substTerm' (C c) o idx = C (substContext' c o idx)
-substTerm' (O o1) o2 idx = O (substObject' o1 o2 idx)
-
-substContext' Star o idx = Star
-substContext' (Quant t c) o idx =
-  Quant (substTerm' t o idx) (substContext' c (addObject 1 o) (idx + 1))
+substTerm' (Prod t1 b) t2 idx =
+  let t1' = substTerm' t1 t2 idx
+      b' = substTerm' b (addTerm 1 t2) (idx + 1)
+  in Prod t1' b'
+substTerm' (Fun t1 b) t2 idx =
+  let t1' = substTerm' t1 t2 idx
+      b' = substTerm' b (addTerm 1 t2) (idx + 1)
+  in Fun t1' b'
+substTerm' (App t1 t2) t3 idx =
+  let t1' = substTerm' t1 t3 idx
+      t2' = substTerm' t2 t3 idx
+  in App t1' t2'

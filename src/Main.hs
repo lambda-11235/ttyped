@@ -40,7 +40,7 @@ repl binds =
                     Left err -> putStrLn ("Binding Error: " ++ show err)
 
                     Right term ->
-                      case checkTerm term Star of
+                      case checkTerm term [] of
                         Left err -> putStrLn ("Type Error: " ++ ppError err)
 
                         Right typ ->
@@ -48,16 +48,16 @@ repl binds =
                             repl (A.addBinding name e binds)
 
                 Right (Right ast) ->
-                  case A.toObject ast binds of
+                  case A.toTerm ast binds of
                     Left err -> putStrLn ("Binding Error: " ++ show err)
 
-                    Right obj ->
-                      case checkObject obj Star of
+                    Right term ->
+                      case checkTerm term [] of
                         Left err -> putStrLn ("Type Error: " ++ ppError err)
 
                         Right typ ->
-                          let o = reduceObject obj in
-                            do putStr (ppObject o)
+                          let t = reduceTerm term in
+                            do putStr (ppTerm t)
                                putStr " : "
                                putStrLn (ppTerm typ)
 
@@ -78,7 +78,7 @@ loadFile binds file = do contents <- readFile file
         Left err -> error ("Binding Error (" ++ file ++ "): " ++ show err)
 
         Right term ->
-          case checkTerm term Star of
+          case checkTerm term [] of
             Left err -> error ("Type Error (" ++ file ++ "): " ++ ppError err)
 
             Right typ ->
