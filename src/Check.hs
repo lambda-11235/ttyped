@@ -15,6 +15,7 @@ data Error = NotAUniverse Expr
            | NotSubType Expr Expr
            | NonPiTypeApplied Expr Expr
            | FinToLarge FinExpr
+           | WrongNumCasesInFinElim FinExpr
            deriving (Eq, Show)
 
 
@@ -50,20 +51,27 @@ checkFinExpr :: FinExpr -> Env -> Either Error Expr
 checkFinExpr (FinType _) _ = return (Universe 0)
 checkFinExpr f@(Fin n t) _ =
   if n < t then return (F (FinType t)) else Left (FinToLarge f)
-checkFinExpr (FinElim n l Nothing) _ = return (feType n l)
-checkFinExpr (FinElim n l (Just (t, cs))) env =
+checkFinExpr fe@(FinElim n l t cs fin) env =
   do tt <- check' t env
-     csts <- mapM (\c -> check' c env) cs
-     fet <- checkApply (feType n l) tt t
-     foldlM (\f (t, e) -> checkApply f t e) fet (zip csts cs)
+     subType tt (Pi (F (FinType n)) (Universe l))
 
-feType n l = (Pi (Pi (F (FinType n)) (Universe l)) (feType' n 0))
+     if length cs /= fromIntegral n
+        then Left (WrongNumCasesInFinElim fe)
+        else return ()
+     csts <- mapM (\c -> check' c env) cs
+     checkCases csts 0
+
+     finT <- check' fin env
+     subType finT (F (FinType n))
+
+     return (reduce (Apply t fin))
   where
-    feType' 0 index = (Pi (F (FinType n)) (Apply (Var (index + 1)) (Var 0)))
-    feType' m index =
-      let argTy = Apply (Var index) (F (Fin (n - m) n))
-          bodyTy = feType' (m - 1) (index + 1)
-      in (Pi argTy bodyTy)
+    checkCases [] _ = return ()
+    checkCases (ct:csts) m =
+      do let rt = reduce (Apply t (F (Fin m n)))
+         check' rt env
+         subType ct rt
+         checkCases csts (m + 1)
 
 
 maxUniverse :: Expr -> Expr -> Either Error Expr

@@ -10,22 +10,24 @@ reduce (Pi ta tb) = Pi (reduce ta) (reduce tb)
 reduce (Lambda t b) = Lambda (reduce t) (reduce b)
 reduce (Apply e1 e2) = apply (reduce e1) (reduce e2)
 reduce (Var index) = Var index
-reduce fe@(F _) = fe
+reduce (F fe) = reduceFinExpr fe
+
+
+reduceFinExpr :: FinExpr -> Expr
+reduceFinExpr ft@(FinType _) = F ft
+reduceFinExpr f@(Fin _ _) = F f
+reduceFinExpr (FinElim n l t cs fin) =
+  let t' = reduce t
+      cs' = map reduce cs
+      fin' = reduce fin
+  in case fin' of
+       F (Fin m _) -> cs' !! (fromIntegral m)
+       _ -> F (FinElim n l t' cs' fin')
 
 
 apply :: Expr -> Expr -> Expr
 apply (Lambda t b) e = reduce (subst b e)
-apply (F finExpr) e = applyFinExpr finExpr e
 apply e1 e2 = Apply e1 e2
-
-applyFinExpr :: FinExpr -> Expr -> Expr
-applyFinExpr (FinElim n l Nothing) t = F (FinElim n l (Just (t, [])))
-applyFinExpr fe@(FinElim n l (Just (t, cs))) e =
-  if length cs < fromIntegral n then F (FinElim n l (Just (t, cs ++ [e]))) else
-  case e of
-    (F (Fin m _)) -> cs !! (fromIntegral m)
-    _ -> Apply (F fe) e
-applyFinExpr fe e = Apply (F fe) e
 
 
 -- | Substitutes the second argument into the first assuming the first is a body
@@ -53,6 +55,5 @@ subst e1 e2 = subst' e1 e2 0
 
     substFin ft@(FinType _) _ _ = ft
     substFin f@(Fin _ _) _ _ = f
-    substFin fe@(FinElim _ _ Nothing) _ _ = fe
-    substFin (FinElim n l (Just (t, cs))) e idx =
-      FinElim n l (Just (subst' t e idx, map (\c -> subst' c e idx) cs))
+    substFin (FinElim n l t cs fin) e idx =
+      FinElim n l (subst' t e idx) (map (\c -> subst' c e idx) cs) (subst' fin e idx)

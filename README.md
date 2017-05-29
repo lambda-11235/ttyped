@@ -13,8 +13,8 @@ There is also a version based on the calculus of constructions in the branch
 Comment lines start with a `#` and extend to the end of the line. Universes are
 denoted by a `*` followed by an optional `{n}`, where `n` is the universe level.
 `F[n]` denotes a finite type with `n` elements, `[m,n]` (where m < n) denotes an
-element of this type, and `finElim[n,l]` is its eliminator which eliminates to
-a value whose type has the type `*{l}`.
+element of this type, and `finElim[n,l](C, ..., f)` is its eliminator which
+eliminates to a value whose type has the type `*{l}`.
 
 ### EBNF
 
@@ -30,7 +30,7 @@ expr = universe
 
 finexpr = 'F', '[' , num , ']'
         | '[' , num , ',' , num , ']' ;
-        | "finElim" , '[' , num , ',' , num , ']' ;
+        | "finElim" , '[' , num , ',' , num , ']' , '(' , expr , { ',' , expr } , ',' , expr , ')' ;
 
 universe = '*' , [ '{' , num , '}' ] ;
 num = digit , { digit } ;
@@ -114,8 +114,9 @@ could be.
 -----------------------------------------
  G |- [n,m] : F[m] if n < m else invalid
 
----------------------------------------------------------------------------------------------------------------------------------
- G |- finElim[n,l] : (Π (Π F[n]. *{l}). (Π (0 [0, n]). (Π (1 [1, n]). (... ((Π (<n - 1> [<n - 1>, n]). Π F[n]. (<n + 1> 0)))))))
+ G |- C : (Π F[n]. *{l})  G, C : (Π F[n]. *{l}) |- c<m> : (C [m, n])  G |- x : F[n]
+------------------------------------------------------------------------------------
+         G |- finElim[n,l](C, c<0>, c<1>, ..., c<n - 1>, x) : (C x)
 ```
 
 ## Example Session

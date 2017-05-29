@@ -37,7 +37,7 @@ data Expr = Universe R.Level
 
 data FinExpr = FinType R.Nat
              | Fin R.Nat R.Nat
-             | FinElim R.Nat R.Level
+             | FinElim R.Nat R.Level Expr [Expr] Expr
              deriving (Eq, Show)
 
 
@@ -49,7 +49,11 @@ toRepr (Apply e1 e2) binds = R.Apply <$> (toRepr e1 binds) <*> (toRepr e2 binds)
 toRepr (Var index) _ = pure (R.Var index)
 toRepr (F (FinType n)) _ = pure (R.F (R.FinType n))
 toRepr (F (Fin n t)) _ = pure (R.F (R.Fin n t))
-toRepr (F (FinElim n l)) _ = pure (R.F (R.FinElim n l Nothing))
+toRepr (F (FinElim n l t cs fin)) binds =
+  do t' <- toRepr t binds
+     cs' <- mapM (flip toRepr binds) cs
+     fin' <- toRepr fin binds
+     return (R.F (R.FinElim n l t' cs' fin'))
 toRepr (Bind name) binds = case getBinding name binds of
                              Just expr -> pure expr
                              Nothing -> Left (Undeclared name)

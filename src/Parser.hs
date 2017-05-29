@@ -109,4 +109,10 @@ finElim = do match LFinElim
              match LComma
              l <- fmap fromIntegral number
              match LRSquare
-             return (FinElim n l)
+
+             match LLParen
+             t <- expr
+             csAndFin <- many1 (match LComma *> expr)
+             match LRParen
+
+             return (FinElim n l t (init csAndFin) (last csAndFin))
