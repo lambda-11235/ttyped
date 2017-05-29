@@ -41,12 +41,12 @@ checkObject :: Object -> Context -> Either Error Term
 checkObject (Var index) context = asSeenFrom index context
 checkObject (Prod t o) context =
   do checkTerm t context
-     checkObject o (concatTerm context t)
+     checkObject o (concatTerm context (reduceTerm t))
      return (C Star)
 checkObject (Fun t o) context =
   do checkTerm t context
-     ot <- checkObject o (concatTerm context t)
      let t' = reduceTerm t
+     ot <- checkObject o (concatTerm context t')
      case ot of
        (C c) -> return (C (Quant t' (reduceContext c)))
        (O o) -> return (O (Prod t' (reduceObject o)))
