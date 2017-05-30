@@ -7,7 +7,7 @@ import Representation (Nat)
 %wrapper "posn"
 
 @char = [a-zA-Z]
-@digit = [0-9]
+-- @digit = [0-9]
 
 tokens :-
 
@@ -16,6 +16,8 @@ tokens :-
 
   "("                                   { \p s -> lexOut p LLParen }
   ")"                                   { \p s -> lexOut p LRParen }
+
+  ":"                                   { \p s -> lexOut p LColon }
 
   "."                                   { \p s -> lexOut p LDot }
 
@@ -29,18 +31,19 @@ tokens :-
 
   "*"                                   { \p s -> lexOut p LStar }
 
-  @digit+                               { \p s -> lexOut p (LNumber (read s)) }
+  -- @digit+                               { \p s -> lexOut p (LNumber (read s)) }
   @char+                                { \p s -> lexOut p (LSym s) }
 
 {
 data Token = LLParen
            | LRParen
+           | LColon
            | LDot
            | LEqual
            | LForall
            | LLambda
            | LStar
-           | LNumber Nat
+           -- | LNumber Nat
            | LSym String
            deriving (Eq, Show)
 

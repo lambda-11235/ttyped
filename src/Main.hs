@@ -57,9 +57,8 @@ repl binds =
 
                         Right typ ->
                           let o = reduceObject obj in
-                            do putStr (ppObject o)
-                               putStr " : "
-                               putStrLn (ppTerm typ)
+                              do putStrLn $ "Value: " ++ (ppObject o)
+                                 putStrLn $ "Type: " ++ (ppTerm typ)
 
             repl binds
 

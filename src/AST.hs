@@ -3,6 +3,7 @@ module AST where
 
 import qualified Representation as R
 
+import Data.List (findIndex)
 import qualified Data.Map as M
 
 
@@ -24,11 +25,10 @@ data Binding = Binding String AST
 
 
 data AST = Star
-         | Quant AST AST
-         | Var R.Nat
-         | Fun AST AST
+         | Quant String AST AST
+         | Var String
+         | Fun String AST AST
          | App AST AST
-         | Bind String
          deriving (Eq, Show)
 
 
@@ -39,25 +39,29 @@ data ConversionError = NotAContext R.Object
 
 
 toTerm :: AST -> Bindings -> Either ConversionError R.Term
-toTerm Star _ = return (R.C R.Star)
-toTerm (Quant t b) binds =
-  do t' <- toTerm t binds
-     b' <- toTerm b binds
-     case b' of
-       (R.C c) -> return (R.C (R.Quant t' c))
-       (R.O o) -> return (R.O (R.Prod t' o))
-toTerm (Var index) _ = return (R.O (R.Var index))
-toTerm (Fun t b) binds =
-  do b' <- toTerm b binds
-     R.O <$> (R.Fun <$> (toTerm t binds) <*> (assertObject b'))
-toTerm (App o1 o2) binds =
-  do o1' <- toTerm o1 binds
-     o2' <- toTerm o2 binds
-     R.O <$> (R.App <$> (assertObject o1') <*> (assertObject o2'))
-toTerm (Bind name) binds =
-  case getBinding name binds of
-    Nothing -> Left (Undeclared name)
-    Just t -> return t
+toTerm ast binds = toTerm' ast binds []
+  where
+    toTerm' :: AST -> Bindings -> [String] -> Either ConversionError R.Term
+    toTerm' Star _ _ = return (R.C R.Star)
+    toTerm' (Quant name t b) binds vars =
+      do t' <- toTerm' t binds vars
+         b' <- toTerm' b binds (name:vars)
+         case b' of
+           (R.C c) -> return (R.C (R.Quant name t' c))
+           (R.O o) -> return (R.O (R.Prod name t' o))
+    toTerm' (Var name) binds vars =
+      case findIndex (== name) vars of
+        Just idx -> return (R.O (R.Var name (fromIntegral idx)))
+        Nothing -> case getBinding name binds of
+                     Just t -> return t
+                     Nothing -> Left (Undeclared name)
+    toTerm' (Fun name t b) binds vars =
+      do b' <- toTerm' b binds (name:vars)
+         R.O <$> ((R.Fun name) <$> (toTerm' t binds vars) <*> (assertObject b'))
+    toTerm' (App o1 o2) binds vars =
+      do o1' <- toTerm' o1 binds vars
+         o2' <- toTerm' o2 binds vars
+         R.O <$> (R.App <$> (assertObject o1') <*> (assertObject o2'))
 
 toContext :: AST -> Bindings -> Either ConversionError R.Context
 toContext ast binds = toTerm ast binds >>= assertContext

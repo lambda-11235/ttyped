@@ -7,34 +7,40 @@ import Data.Word
 type Nat = Word64
 
 
+{- The strings in Quant, Var, Prod, and Fun all represent variable names.
+   However, since variables use de Bruijn indices, these variable names are only
+   used for debugging purposes.
+-}
+
+
 data Term = C Context
           | O Object
           deriving (Eq, Show)
 
 
 data Context = Star
-             | Quant Term Context
+             | Quant String Term Context
              deriving (Eq, Show)
 
 contextLength :: Context -> Nat
 contextLength Star = 0
-contextLength (Quant _ c) = 1 + contextLength c
+contextLength (Quant _ _ c) = 1 + contextLength c
 
 concatContext :: Context -> Context -> Context
 concatContext Star c = c
-concatContext (Quant t c1) c2 = Quant t (concatContext c1 c2)
+concatContext (Quant name t c1) c2 = Quant name t (concatContext c1 c2)
 
-concatTerm :: Context -> Term -> Context
-concatTerm c t = concatContext c (Quant t Star)
+concatTerm :: Context -> String -> Term -> Context
+concatTerm c name t = concatContext c (Quant name t Star)
 
 mapContext :: (Term -> Term) -> Context -> Context
 mapContext f Star = Star
-mapContext f (Quant t c) = Quant (f t) (mapContext f c)
+mapContext f (Quant name t c) = Quant name (f t) (mapContext f c)
 
 
-data Object = Var Nat
-            | Prod Term Object
-            | Fun Term Object
+data Object = Var String Nat
+            | Prod String Term Object
+            | Fun String Term Object
             | App Object Object
             deriving (Eq, Show)
 
@@ -54,16 +60,16 @@ addTerm' n (O o) idx = O (addObject' n o idx)
 
 
 addContext' _ Star _ = Star
-addContext' n (Quant t c) idx =
-  Quant (addTerm' n t idx) (addContext' n c (idx + 1))
+addContext' n (Quant name t c) idx =
+  Quant name (addTerm' n t idx) (addContext' n c (idx + 1))
 
 
-addObject' n (Var index) idx =
-  if index < idx then Var index else Var (index + n)
-addObject' n (Prod t o) idx =
-  Prod (addTerm' n t idx) (addObject' n o (idx + 1))
-addObject' n (Fun t o) idx =
-  Fun (addTerm' n t idx) (addObject' n o (idx + 1))
+addObject' n (Var name index) idx =
+  if index < idx then Var name index else Var name (index + n)
+addObject' n (Prod name t o) idx =
+  Prod name (addTerm' n t idx) (addObject' n o (idx + 1))
+addObject' n (Fun name t o) idx =
+  Fun name (addTerm' n t idx) (addObject' n o (idx + 1))
 addObject' n (App o1 o2) idx = App (addObject' n o1 idx) (addObject' n o2 idx)
 
 
@@ -73,10 +79,11 @@ ppTerm (O o) = ppObject o
 
 ppContext :: Context -> String
 ppContext Star = "*"
-ppContext (Quant t c) = "(∀" ++ ppTerm t ++ ". " ++ ppContext c ++ ")"
+ppContext (Quant name t c) =
+  "(∀" ++ name ++ " : " ++ ppTerm t ++ ". " ++ ppContext c ++ ")"
 
 ppObject :: Object -> String
-ppObject (Var index) = show index
-ppObject (Prod t c) = "(∀" ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
-ppObject (Fun t c) = "(λ" ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
+ppObject (Var name index) = name ++ "[" ++ show index ++ "]"
+ppObject (Prod name t c) = "(∀" ++ name ++ " : " ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
+ppObject (Fun name t c) = "(λ" ++ name ++ " : " ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
 ppObject (App o1 o2) = "(" ++ ppObject o1 ++ " " ++ ppObject o2 ++ ")"

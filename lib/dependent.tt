@@ -3,19 +3,22 @@
 # of its second argumentdepends on the value of the first argument. This cannot
 # be done in System Fω.
 
-boolTypeT = (@*. (@*. *))
-trueT = (\*. (\*. 0))
-falseT = (\*. (\*. 1))
+boolTypeT = (@a : *. (@b : *. *))
+falseT = (\a : *. (\b : *. a))
+trueT = (\a : *. (\b : *. b))
 
-isTrueT = (\boolTypeT. ((0 botType) unitType))
+isTrueT = (\b : boolTypeT. ((b botType) unitType))
 
-foo = (\boolTypeT. (\(isTrueT 0). 0))
+foo = (\b : boolTypeT. (\x : (isTrueT b). x))
 
 
 # Example:
 # λ> (foo falseT)
-# (λ(∀*. 0). 0) : (∀(∀*. 0). (∀*. 0))
+# Value: (λx : (∀a : *. a[0]). x[0])
+# Type: (∀x : (∀a : *. a[0]). (∀a : *. a[0]))
 # λ> (foo trueT)
-# (λ(∀*. (∀0. 1)). 0) : (∀(∀*. (∀0. 1)). (∀*. (∀0. 1)))
+# Value: (λx : (∀a : *. (∀x : a[0]. a[1])). x[0])
+# Type: (∀x : (∀a : *. (∀x : a[0]. a[1])). (∀a : *. (∀x : a[0]. a[1])))
 # λ> ((foo trueT) unit)
-# (λ*. (λ0. 0)) : (∀*. (∀0. 1))
+# Value: (λa : *. (λx : a[0]. x[0]))
+# Type: (∀a : *. (∀x : a[0]. a[1]))

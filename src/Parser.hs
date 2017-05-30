@@ -18,11 +18,11 @@ match tok = tokenPrim (show . getToken) pos (match' . getToken)
   where
     match' x = if x == tok then Just () else Nothing
 
-number :: Parser Nat
+{-number :: Parser Nat
 number = tokenPrim (show . getToken) pos (match' . getToken)
   where
     match' (LNumber n) = Just n
-    match' _ = Nothing
+    match' _ = Nothing-}
 
 sym :: Parser String
 sym = tokenPrim (show . getToken) pos (match' . getToken)
@@ -53,7 +53,7 @@ binding = do name <- sym
 
 
 ast :: Parser AST
-ast = (match LStar *> pure Star) <|> parened <|> (Var <$> number) <|> (Bind <$> sym)
+ast = (match LStar *> pure Star) <|> parened <|> (Var <$> sym)
 
 -- NOTE: This is necessary to avoid backtracking.
 parened = do match LLParen
@@ -62,16 +62,20 @@ parened = do match LLParen
              return e
 
 quant = do match LForall
+           name <- sym
+           match LColon
            t <- ast
            match LDot
            b <- ast
-           return (Quant t b)
+           return (Quant name t b)
 
 fun = do match LLambda
+         name <- sym
+         match LColon
          t <- ast
          match LDot
          b <- ast
-         return (Fun t b)
+         return (Fun name t b)
 
 app = do o1 <- ast
          o2 <- ast

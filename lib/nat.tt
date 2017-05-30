@@ -1,10 +1,10 @@
 
 # Natural numbers.
 
-natType = (@*. (@(@0. 1). (@1. 2)))
+natType = (@r : *. (@f : (@x : r. r). (@x : r. r)))
 
-zero = (\*. (\(@0. 1). (\1. 0)))
-succ = (\natType. (\*. (\(@0. 1). (\1. (1 (((3 2) 1) 0))))))
+zero = (\r : *. (\f : (@x : r. r). (\x : r. x)))
+succ = (\n : natType. (\r : *. (\f : (@x : r. r). (\x : r. (f (((n r) f) x))))))
 
 one = (succ zero)
 two = (succ one)
@@ -18,11 +18,12 @@ nine = (succ eight)
 ten = (succ nine)
 
 
-add = (\natType. (\natType. (\*. (\(@0. 1). (\1. (((4 2) 1) (((3 2) 1) 0)))))))
+add = (\n : natType. (\m : natType. (\r : *. (\f : (@x : r. r). (\x : r.
+ (((n r) f) (((m r) f) x)))))))
 
-mult = (\natType. (\natType. (((1 natType) (add 0)) zero)))
+mult = (\n : natType. (\m : natType. (((n natType) (add m)) zero)))
 
-power = (\natType. (\natType. (((0 natType) (mult 1)) one)))
+power = (\n : natType. (\m : natType. (((m natType) (mult n)) one)))
 
 
 # What I'm doing here is passing along a pair with (n, m) that starts at (0, 0).
@@ -30,8 +31,10 @@ power = (\natType. (\natType. (((0 natType) (mult 1)) one)))
 # should have (x, p), where x is the passed in number and p is its predecessor.
 PNT = ((pairType natType) natType)
 PN = ((pair natType) natType)
-pred = (\natType. (((((0 PNT)
-                       (\PNT. ((0 PNT) (\natType. (\natType. ((PN (succ 1)) 1))))))
-                       ((PN zero) zero))
-                    natType)
-                   (\natType. (\natType. 0))))
+pred = (\n : natType. (
+  ((((n PNT)
+    (\pnt : PNT. ((pnt PNT) (\next : natType. (\prev : natType.
+      ((PN (succ next)) next))))))
+    ((PN zero) zero))
+    natType)
+  (\next : natType. (\prev : natType. prev))))
