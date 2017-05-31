@@ -1,24 +1,31 @@
 
 # A demonstration of fully dependent types. The return type of foo and the type
-# of its second argumentdepends on the value of the first argument. This cannot
+# of its second argument depends on the value of the first argument. This cannot
 # be done in System Fω.
 
+# A boolean that operates over types.
 boolTypeT = (@a : *. (@b : *. *))
 falseT = (\a : *. (\b : *. a))
 trueT = (\a : *. (\b : *. b))
 
-isTrueT = (\b : boolTypeT. ((b botType) unitType))
+# A boolean parameterized over a value of type boolTypeT.
+boolTypeD = (\bt : boolTypeT. (@a : *. (@b : *. (@x : a. (@y : b. ((bt a) b))))))
+falseD = (\a : *. (\b : *. (\x : a. (\y : b. x))))
+trueD = (\a : *. (\b : *. (\x : a. (\y : b. y))))
 
-foo = (\b : boolTypeT. (\x : (isTrueT b). x))
+foo = (\bt : boolTypeT. (\b : (boolTypeD bt).
+  ((((b unitType) boolType) unit) true)))
 
 
 # Example:
-# λ> (foo falseT)
-# Value: (λx : (∀a : *. a[0]). x[0])
-# Type: (∀x : (∀a : *. a[0]). (∀a : *. a[0]))
 # λ> (foo trueT)
-# Value: (λx : (∀a : *. (∀x : a[0]. a[1])). x[0])
-# Type: (∀x : (∀a : *. (∀x : a[0]. a[1])). (∀a : *. (∀x : a[0]. a[1])))
-# λ> ((foo trueT) unit)
+# Value: (λb : (∀a : *. (∀b : *. (∀x : a[1]. (∀y : b[1]. b[2])))). ((((b[0] (∀a : *. (∀x : a[0]. a[1]))) (∀r : *. (∀x : r[0]. (∀y : r[1]. r[2])))) (λa : *. (λx : a[0]. x[0]))) (λr : *. (λx : r[0]. (λy : r[1]. y[0])))))
+# Type: (∀b : (∀a : *. (∀b : *. (∀x : a[1]. (∀y : b[1]. b[2])))). (∀r : *. (∀x : r[0]. (∀y : r[1]. r[2]))))
+# λ> ((foo trueT) trueD)
+# Value: (λr : *. (λx : r[0]. (λy : r[1]. y[0])))
+# Type: (∀r : *. (∀x : r[0]. (∀y : r[1]. r[2])))
+# λ> ((foo falseT) falseD)
 # Value: (λa : *. (λx : a[0]. x[0]))
 # Type: (∀a : *. (∀x : a[0]. a[1]))
+# λ> ((foo falseT) trueD)
+# Type Error: Got (∀a : *. (∀b : *. (∀x : a[1]. (∀y : b[1]. b[2])))) when expecting (∀a : *. (∀b : *. (∀x : a[1]. (∀y : b[1]. a[3]))))

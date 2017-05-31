@@ -28,6 +28,21 @@ sigmaType = (\a : *. (\P : (@x : a. *). (@r : *. (@f : (@x : a. (@y : (P x). r))
 sigma = (\a : *. (\P : (@x : a. *). (\x : a. (\y : (P x).
   (\r : *. (\f : (@x : a. (@y : (P x). r)). ((f x) y)))))))
 
-# A proof that sigma actually produces a value of.
+# A proof that sigma actually produces a value of type sigmaType.
 sigmaProof = (\a : *. (\P : (@x : a. *). (\x : a. (\y : (P x).
  ((id ((sigmaType a) P)) ((((sigma a) P) x) y))))))
+
+
+# Well founded types.
+W = (\a : *. (\b : (@x : a. *).
+  (@r : *.
+    (@f : (@x : a. (@y : (@sel : (b x). r). r)).
+      r))))
+
+sup = (\a : *. (\b : (@x : a. *). (\x : a. (\y : (@r : *. (@sel : (b x). r)).
+  (\r : *. (\f : (@x : a. (@y : (@sel : (b x). r). r)).
+    ((f x) (y r))))))))
+
+# A proof that sup actually produces a value of type W.
+WProof = (\a : *. (\b : (@x : a. *). (\x : a. (\y : (@r : *. (@sel : (b x). r)).
+  ((id ((W a) b)) ((((sup a) b) x) y))))))
