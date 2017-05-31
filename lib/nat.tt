@@ -26,11 +26,13 @@ mult = (\n : natType. (\m : natType. (((n natType) (add m)) zero)))
 power = (\n : natType. (\m : natType. (((m natType) (mult n)) one)))
 
 
+PNT = ((pairType natType) natType)
+PN = ((pair natType) natType)
+
 # What I'm doing here is passing along a pair with (n, m) that starts at (0, 0).
 # On each iteration we convert it to (n + 1, n). At the end of the iterations we
 # should have (x, p), where x is the passed in number and p is its predecessor.
-PNT = ((pairType natType) natType)
-PN = ((pair natType) natType)
+# Returns 0 when 0 is used as an argument.
 pred = (\n : natType. (
   ((((n PNT)
     (\pnt : PNT. ((pnt PNT) (\next : natType. (\prev : natType.
@@ -38,3 +40,15 @@ pred = (\n : natType. (
     ((PN zero) zero))
     natType)
   (\next : natType. (\prev : natType. prev))))
+
+# The subtraction function. if m < n then m - n = 0.
+sub = (\n : natType. (\m : natType. (((m natType) pred) n)))
+
+# Computes the factorial of a natural number.
+fact = (\n : natType. (
+  ((((n PNT)
+    (\pnt : PNT. ((pnt PNT) (\fac : natType. (\m : natType.
+      ((PN ((mult fac) m)) (succ m)))))))
+    ((PN one) one))
+    natType)
+  (\fac : natType. (\m : natType. fac))))
