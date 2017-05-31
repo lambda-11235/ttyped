@@ -6,3 +6,9 @@ nil = (\a : *. (\r : *. (\f : (@x : a. (@y : r. r)). (\b : r. b))))
 cons = (\a : *. (\x : a. (\xs : (listType a).
         (\r : *. (\f : (@x : a. (@y : r. r)). (\b : r.
          ((f x) (((xs r) f) b))))))))
+
+
+map = (\a : *. (\b : *. (\f : (@x : a. b). (\xs : (listType a).
+  (((xs (listType b))
+    (\x : a. (\y : (listType b). (((cons b) (f x)) y))))
+    (nil b))))))
