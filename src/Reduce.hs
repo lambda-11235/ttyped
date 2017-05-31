@@ -9,6 +9,12 @@ module Reduce ( reduceTerm
 
 import Representation
 
+
+{- Note that all reductions assume the thing being reduced has been type
+   checked.
+-}
+
+
 reduceTerm :: Term -> Term
 reduceTerm (C c) = C (reduceContext c)
 reduceTerm (O o) = O (reduceObject o)
@@ -30,6 +36,8 @@ apply (Fun _ _ b) o = reduceObject (substObject b o)
 apply o1 o2 = App o1 o2
 
 
+-- | Substitutes an object in for the top de Bruijn index 0 and decrements all
+-- free variables.
 substObject :: Object -> Object -> Object
 substObject o1 o2 = substObject' o1 o2 0
 

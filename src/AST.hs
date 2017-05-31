@@ -24,6 +24,8 @@ data Binding = Binding String AST
   deriving (Eq, Show)
 
 
+-- | The AST is basically just the context and object level squashed down into
+-- one term language.
 data AST = Star
          | Quant String AST AST
          | Var String
@@ -38,6 +40,8 @@ data ConversionError = NotAContext R.Object
                      deriving (Eq, Show)
 
 
+-- | Here we convert the AST to a Term. In this phase contexts are distinguished
+-- from objects and Curry variables are replaced with de Bruijn indices.
 toTerm :: AST -> Bindings -> Either ConversionError R.Term
 toTerm ast binds = toTerm' ast binds []
   where

@@ -45,6 +45,7 @@ data Object = Var String Nat
             deriving (Eq, Show)
 
 
+-- | Increments all free variables by some amount.
 addTerm :: Nat -> Term -> Term
 addTerm n t = addTerm' n t 0
 

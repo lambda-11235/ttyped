@@ -59,7 +59,7 @@ checkObject (App o1 o2) context =
      return (reduceTerm o3)
 
 
--- | Gets the type of a variable as seen from the context.
+-- | Gets the type of a variable as seen from its surrounding context.
 asSeenFrom :: String -> Nat -> Context -> Either Error Term
 asSeenFrom name index context =
   do t <- getTerm index context (contextLength context)
@@ -71,7 +71,8 @@ asSeenFrom name index context =
       else getTerm index c (len - 1)
 
 
--- | Returns the type of applying some type to another type.
+-- | Returns the type of applying some type to another type. The third argument
+-- is the object being applied.
 checkApply :: Term -> Term -> Object -> Either Error Term
 checkApply (C (Quant _ t1 c)) t2 o =
   if unify t1 t2 then return (C (substContext c o)) else Left (TypeMismatch t1 t2)
