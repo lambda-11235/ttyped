@@ -1,0 +1,25 @@
+
+# A proof that (∀(x ∈ A), ¬(P x)) → ¬(∃(x ∈ A), P x).
+
+allNotExist = (\a : *. (\P : (@x : a. *). (\all : (@x : a. (not (P x))).
+  (\exists : ((sigmaType a) P). ((exists botType) all)))))
+
+allNotExistP = ((id
+  (@a : *. (@P : (@x : a. *).
+    (@all : (@x : a. (not (P x))).
+      (not ((sigmaType a) P))))))
+  allNotExist)
+
+
+# A proof that (∃(x ∈ A), ¬(P x)) → ¬(∀(x ∈ A), P x).
+
+existNotAll = (\a : *. (\P : (@x : a. *).
+  (\exists : ((sigmaType a) (\x : a. (not (P x)))).
+  (\all : (@x : a. (P x)).
+    ((exists botType) (\x : a. (\y : (not (P x)). (y (all x)))))))))
+
+existNotAllP = ((id
+  (@a : *. (@P : (@x : a. *).
+    (@exists : ((sigmaType a) (\x : a. (not (P x)))).
+      (not (@x : a. (P x)))))))
+  existNotAll)
