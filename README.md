@@ -109,6 +109,18 @@ Value: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
 Type: *
 ```
 
+## Notes
+
+### The `id` Pattern
+
+The `id` pattern is a technique where we assert that an object has a certain
+type. Using `id`, defined in lib/base.tt as `(\a : *. (\x : a. x))`, we can
+write `((id A) x)` to assert that `x : A` when type checking. This is useful to
+make sure a function has the right return type. For example, `add` in lib/nat.tt
+is defined as `(\n : natT. (\m : natT. ((id natT) ...)`. This pattern is used
+throughout the definitions in lib. It is also useful when using the REPL to
+determine the type of expressions.
+
 ## TODO
 
 - Add better AST conversion and type errors.

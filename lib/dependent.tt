@@ -4,17 +4,17 @@
 # be done in System Fω.
 
 # A boolean that operates over types.
-boolTypeT = (@a : *. (@b : *. *))
+boolTT = (@a : *. (@b : *. *))
 falseT = (\a : *. (\b : *. a))
 trueT = (\a : *. (\b : *. b))
 
 # A boolean parameterized over a value of type boolTypeT.
-boolTypeD = (\bt : boolTypeT. (@a : *. (@b : *. (@x : a. (@y : b. ((bt a) b))))))
+boolDT = (\bt : boolTT. (@a : *. (@b : *. (@x : a. (@y : b. ((bt a) b))))))
 falseD = (\a : *. (\b : *. (\x : a. (\y : b. x))))
 trueD = (\a : *. (\b : *. (\x : a. (\y : b. y))))
 
-foo = (\bt : boolTypeT. (\b : (boolTypeD bt).
-  ((((b unitType) boolType) unit) true)))
+foo = (\bt : boolTT. (\b : (boolDT bt).
+  ((((b unitT) boolT) unit) true)))
 
 
 # Example:

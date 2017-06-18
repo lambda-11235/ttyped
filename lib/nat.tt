@@ -1,10 +1,13 @@
 
 # Natural numbers.
 
-natType = (@r : *. (@f : (@x : r. r). (@x : r. r)))
+natT = (@r : *. (@f : (@x : r. r). (@x : r. r)))
 
-zero = (\r : *. (\f : (@x : r. r). (\x : r. x)))
-succ = (\n : natType. (\r : *. (\f : (@x : r. r). (\x : r. (f (((n r) f) x))))))
+zero = ((id natT)
+  (\r : *. (\f : (@x : r. r). (\x : r. x))))
+
+succ = (\n : natT. ((id natT)
+  (\r : *. (\f : (@x : r. r). (\x : r. (f (((n r) f) x)))))))
 
 one = (succ zero)
 two = (succ one)
@@ -18,37 +21,41 @@ nine = (succ eight)
 ten = (succ nine)
 
 
-add = (\n : natType. (\m : natType. (\r : *. (\f : (@x : r. r). (\x : r.
- (((n r) f) (((m r) f) x)))))))
+add = (\n : natT. (\m : natT. ((id natT)
+  (\r : *. (\f : (@x : r. r). (\x : r.
+    (((n r) f) (((m r) f) x))))))))
 
-mult = (\n : natType. (\m : natType. (((n natType) (add m)) zero)))
+mult = (\n : natT. (\m : natT. ((id natT)
+  (((n natT) (add m)) zero))))
 
-power = (\n : natType. (\m : natType. (((m natType) (mult n)) one)))
+power = (\n : natT. (\m : natT. ((id natT)
+  (((m natT) (mult n)) one))))
 
 
-PNT = ((pairType natType) natType)
-PN = ((pair natType) natType)
+PNT = ((pairT natT) natT)
+PN = ((pair natT) natT)
 
 # What I'm doing here is passing along a pair with (n, m) that starts at (0, 0).
 # On each iteration we convert it to (n + 1, n). At the end of the iterations we
 # should have (x, p), where x is the passed in number and p is its predecessor.
 # Returns 0 when 0 is used as an argument.
-pred = (\n : natType. (
-  ((((n PNT)
-    (\pnt : PNT. ((pnt PNT) (\next : natType. (\prev : natType.
-      ((PN (succ next)) next))))))
-    ((PN zero) zero))
-    natType)
-  (\next : natType. (\prev : natType. prev))))
+pred = (\n : natT. ((id natT)
+  (((((n PNT)
+     (\pnt : PNT. ((pnt PNT) (\next : natT. (\prev : natT.
+       ((PN (succ next)) next))))))
+     ((PN zero) zero))
+    natT)
+   (\next : natT. (\prev : natT. prev)))))
 
 # The subtraction function. if m < n then m - n = 0.
-sub = (\n : natType. (\m : natType. (((m natType) pred) n)))
+sub = (\n : natT. (\m : natT. ((id natT)
+  (((m natT) pred) n))))
 
 # Computes the factorial of a natural number.
-fact = (\n : natType. (
-  ((((n PNT)
-    (\pnt : PNT. ((pnt PNT) (\fac : natType. (\m : natType.
-      ((PN ((mult fac) m)) (succ m)))))))
-    ((PN one) one))
-    natType)
-  (\fac : natType. (\m : natType. fac))))
+fact = (\n : natT. ((id natT)
+  (((((n PNT)
+      (\pnt : PNT. ((pnt PNT) (\fac : natT. (\m : natT.
+        ((PN ((mult fac) m)) (succ m)))))))
+      ((PN one) one))
+      natT)
+  (\fac : natT. (\m : natT. fac)))))

@@ -1,7 +1,7 @@
 
 # The identity function of types of type *, as well as its type.
-id = (\a : *. (\x : a. x))
 idT = (@a : *. (@x : a. a))
+id = (\a : *. (\x : a. x))
 
 const = (\a : *. (\x : a. (\b : *. (\y : b. x))))
 
@@ -9,32 +9,38 @@ comp = (\a : *. (\b : *. (\c : *. (\f : (@x : b. c). (\g : (@x : a. b).
   (\x : a. (f (g x))))))))
 
 
-pair = (\a : *. (\b : *. (\x : a. (\y : b.
-  (\r : *. (\f : (@x : a. (@y : b. r)). ((f x) y)))))))
-pairType = (\a : *. (\b : *. (@r : *. (@f : (@x : a. (@y : b. r)). r))))
+botT = (@a : *. a)
 
+not = (\a : *. (@x : a. botT))
 
-botType = (@a : *. a)
-
-not = (\a : *. (@x : a. botType))
-
-unitType = idT
+unitT = idT
 unit = id
 
 
-boolType = (@r : *. (@x : r. (@y : r. r)))
+boolT = (@r : *. (@x : r. (@y : r. r)))
 false = (\r : *. (\x : r. (\y : r. x)))
 true = (\r : *. (\x : r. (\y : r. y)))
 
 
-sigmaType = (\a : *. (\P : (@x : a. *). (@r : *. (@f : (@x : a. (@y : (P x). r)). r))))
+sumT = (\a : *. (\b : *. (@r : *. (@f : (@x : a. r). (@g : (@y : b. r). r)))))
 
-sigma = (\a : *. (\P : (@x : a. *). (\x : a. (\y : (P x).
-  (\r : *. (\f : (@x : a. (@y : (P x). r)). ((f x) y)))))))
+injL = (\a : *. (\b : *. (\x : a. ((id ((sumT a) b))
+  (\r : *. (\f : (@x : a. r). (\g : (@y : b. r). (f x))))))))
 
-# A proof that sigma actually produces a value of type sigmaType.
-sigmaProof = (\a : *. (\P : (@x : a. *). (\x : a. (\y : (P x).
- ((id ((sigmaType a) P)) ((((sigma a) P) x) y))))))
+injR = (\a : *. (\b : *. (\y : b. ((id ((sumT a) b))
+  (\r : *. (\f : (@x : a. r). (\g : (@y : b. r). (g y))))))))
+
+
+sigmaT = (\a : *. (\P : (@x : a. *). (@r : *. (@f : (@x : a. (@y : (P x). r)). r))))
+
+sigma = (\a : *. (\P : (@x : a. *). (\x : a. (\y : (P x). ((id ((sigmaT a) P))
+  (\r : *. (\f : (@x : a. (@y : (P x). r)). ((f x) y))))))))
+
+
+pairT = (\a : *. (\b : *. ((sigmaT a) (\x : a. b))))
+
+pair = (\a : *. (\b : *. (\x : a. (\y : b. ((id ((pairT a) b))
+  ((((sigma a) (\x : a. b)) x) y))))))
 
 
 # Well founded types.
@@ -44,9 +50,6 @@ W = (\a : *. (\b : (@x : a. *).
       r))))
 
 sup = (\a : *. (\b : (@x : a. *). (\x : a. (\y : (@r : *. (@sel : (b x). r)).
-  (\r : *. (\f : (@x : a. (@y : (@sel : (b x). r). r)).
-    ((f x) (y r))))))))
-
-# A proof that sup actually produces a value of type W.
-WProof = (\a : *. (\b : (@x : a. *). (\x : a. (\y : (@r : *. (@sel : (b x). r)).
-  ((id ((W a) b)) ((((sup a) b) x) y))))))
+  ((id ((W a) b))
+    (\r : *. (\f : (@x : a. (@y : (@sel : (b x). r). r)).
+      ((f x) (y r)))))))))
