@@ -2,7 +2,7 @@
 # A proof that (∀(x ∈ A), ¬(P x)) → ¬(∃(x ∈ A), P x).
 
 allNotExist = (\a : *. (\P : (@x : a. *). (\all : (@x : a. (not (P x))).
-  (\exists : ((sigmaT a) P). ((exists botT) all)))))
+  (\exists : ((sigmaT a) P). ((exists bot) all)))))
 
 allNotExistP = ((id
   (@a : *. (@P : (@x : a. *).
@@ -16,7 +16,7 @@ allNotExistP = ((id
 existNotAll = (\a : *. (\P : (@x : a. *).
   (\exists : ((sigmaT a) (\x : a. (not (P x)))).
   (\all : (@x : a. (P x)).
-    ((exists botT) (\x : a. (\y : (not (P x)). (y (all x)))))))))
+    ((exists bot) (\x : a. (\y : (not (P x)). (y (all x)))))))))
 
 existNotAllP = ((id
   (@a : *. (@P : (@x : a. *).

@@ -1,15 +1,15 @@
 
-listT = (\a : *. (@r : *. (@f : (@x : a. (@y : r. r)). (@b : r. r))))
+list = (\a : *. (@r : *. (@f : (@x : a. (@y : r. r)). (@b : r. r))))
 
-nil = (\a : *. ((id (listT a))
+nil = (\a : *. ((id (list a))
   (\r : *. (\f : (@x : a. (@y : r. r)). (\b : r. b)))))
 
-cons = (\a : *. (\x : a. (\xs : (listT a). ((id (listT a))
+cons = (\a : *. (\x : a. (\xs : (list a). ((id (list a))
         (\r : *. (\f : (@x : a. (@y : r. r)). (\b : r.
          ((f x) (((xs r) f) b)))))))))
 
 
-map = (\a : *. (\b : *. (\f : (@x : a. b). (\xs : (listT a). ((id (listT b))
-  (((xs (listT b))
-    (\x : a. (\y : (listT b). (((cons b) (f x)) y))))
+map = (\a : *. (\b : *. (\f : (@x : a. b). (\xs : (list a). ((id (list b))
+  (((xs (list b))
+    (\x : a. (\y : (list b). (((cons b) (f x)) y))))
     (nil b)))))))

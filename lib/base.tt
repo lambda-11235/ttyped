@@ -9,25 +9,25 @@ comp = (\a : *. (\b : *. (\c : *. (\f : (@x : b. c). (\g : (@x : a. b).
   (\x : a. (f (g x))))))))
 
 
-botT = (@a : *. a)
+bot = (@a : *. a)
 
-not = (\a : *. (@x : a. botT))
+not = (\a : *. (@x : a. bot))
 
 unitT = idT
 unit = id
 
 
-boolT = (@r : *. (@x : r. (@y : r. r)))
+bool = (@r : *. (@x : r. (@y : r. r)))
 false = (\r : *. (\x : r. (\y : r. x)))
 true = (\r : *. (\x : r. (\y : r. y)))
 
 
-sumT = (\a : *. (\b : *. (@r : *. (@f : (@x : a. r). (@g : (@y : b. r). r)))))
+sum = (\a : *. (\b : *. (@r : *. (@f : (@x : a. r). (@g : (@y : b. r). r)))))
 
-injL = (\a : *. (\b : *. (\x : a. ((id ((sumT a) b))
+injL = (\a : *. (\b : *. (\x : a. ((id ((sum a) b))
   (\r : *. (\f : (@x : a. r). (\g : (@y : b. r). (f x))))))))
 
-injR = (\a : *. (\b : *. (\y : b. ((id ((sumT a) b))
+injR = (\a : *. (\b : *. (\y : b. ((id ((sum a) b))
   (\r : *. (\f : (@x : a. r). (\g : (@y : b. r). (g y))))))))
 
 
