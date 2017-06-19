@@ -3,11 +3,11 @@
 
 nat = (@r : *. (@f : (@x : r. r). (@x : r. r)))
 
-zero = ((id nat)
+zero = (id nat
   (\r : *. (\f : (@x : r. r). (\x : r. x))))
 
-succ = (\n : nat. ((id nat)
-  (\r : *. (\f : (@x : r. r). (\x : r. (f (((n r) f) x)))))))
+succ = (\n : nat. (id nat
+  (\r : *. (\f : (@x : r. r). (\x : r. (f (n r f x)))))))
 
 one = (succ zero)
 two = (succ one)
@@ -21,41 +21,43 @@ nine = (succ eight)
 ten = (succ nine)
 
 
-add = (\n : nat. (\m : nat. ((id nat)
+add = (\n : nat. (\m : nat. (id nat
   (\r : *. (\f : (@x : r. r). (\x : r.
-    (((n r) f) (((m r) f) x))))))))
+    (n r f (m r f x))))))))
 
-mult = (\n : nat. (\m : nat. ((id nat)
-  (((n nat) (add m)) zero))))
+mult = (\n : nat. (\m : nat. (id nat
+  (n nat (add m) zero))))
 
-power = (\n : nat. (\m : nat. ((id nat)
-  (((m nat) (mult n)) one))))
+power = (\n : nat. (\m : nat. (id nat
+  (m nat (mult n) one))))
 
 
-PNT = ((pairT nat) nat)
-PN = ((pair nat) nat)
+PNT = (pairT nat nat)
+PN = (pair nat nat)
 
 # What I'm doing here is passing along a pair with (n, m) that starts at (0, 0).
 # On each iteration we convert it to (n + 1, n). At the end of the iterations we
 # should have (x, p), where x is the passed in number and p is its predecessor.
 # Returns 0 when 0 is used as an argument.
-pred = (\n : nat. ((id nat)
-  (((((n PNT)
-     (\pnt : PNT. ((pnt PNT) (\next : nat. (\prev : nat.
-       ((PN (succ next)) next))))))
-     ((PN zero) zero))
-    nat)
-   (\next : nat. (\prev : nat. prev)))))
+pred = (\n : nat. (id nat
+  ((n PNT
+      (\pnt : PNT. (pnt PNT
+        (\next : nat. (\prev : nat.
+          (PN (succ next) next)))))
+      (PN zero zero))
+    nat
+    (\next : nat. (\prev : nat. prev)))))
 
 # The subtraction function. if m < n then m - n = 0.
-sub = (\n : nat. (\m : nat. ((id nat)
-  (((m nat) pred) n))))
+sub = (\n : nat. (\m : nat. (id nat
+  (m nat pred n))))
 
 # Computes the factorial of a natural number.
-fact = (\n : nat. ((id nat)
-  (((((n PNT)
-      (\pnt : PNT. ((pnt PNT) (\fac : nat. (\m : nat.
-        ((PN ((mult fac) m)) (succ m)))))))
-      ((PN one) one))
-      nat)
-  (\fac : nat. (\m : nat. fac)))))
+fact = (\n : nat. (id nat
+  ((n PNT
+      (\pnt : PNT. (pnt PNT
+        (\fac : nat. (\m : nat.
+          (PN (mult fac m) (succ m))))))
+      (PN one one))
+   nat
+   (\fac : nat. (\m : nat. fac)))))

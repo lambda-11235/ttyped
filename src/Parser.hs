@@ -77,6 +77,6 @@ fun = do match LLambda
          b <- ast
          return (Fun name t b)
 
-app = do o1 <- ast
-         o2 <- ast
-         return (App o1 o2)
+app = do o <- ast
+         os <- many1 ast
+         return (foldl App o os)

@@ -24,23 +24,23 @@ true = (\r : *. (\x : r. (\y : r. y)))
 
 sum = (\a : *. (\b : *. (@r : *. (@f : (@x : a. r). (@g : (@y : b. r). r)))))
 
-injL = (\a : *. (\b : *. (\x : a. ((id ((sum a) b))
+injL = (\a : *. (\b : *. (\x : a. (id (sum a b)
   (\r : *. (\f : (@x : a. r). (\g : (@y : b. r). (f x))))))))
 
-injR = (\a : *. (\b : *. (\y : b. ((id ((sum a) b))
+injR = (\a : *. (\b : *. (\y : b. (id (sum a b)
   (\r : *. (\f : (@x : a. r). (\g : (@y : b. r). (g y))))))))
 
 
 sigmaT = (\a : *. (\P : (@x : a. *). (@r : *. (@f : (@x : a. (@y : (P x). r)). r))))
 
-sigma = (\a : *. (\P : (@x : a. *). (\x : a. (\y : (P x). ((id ((sigmaT a) P))
-  (\r : *. (\f : (@x : a. (@y : (P x). r)). ((f x) y))))))))
+sigma = (\a : *. (\P : (@x : a. *). (\x : a. (\y : (P x). (id (sigmaT a P)
+  (\r : *. (\f : (@x : a. (@y : (P x). r)). (f x y))))))))
 
 
-pairT = (\a : *. (\b : *. ((sigmaT a) (\x : a. b))))
+pairT = (\a : *. (\b : *. (sigmaT a (\x : a. b))))
 
-pair = (\a : *. (\b : *. (\x : a. (\y : b. ((id ((pairT a) b))
-  ((((sigma a) (\x : a. b)) x) y))))))
+pair = (\a : *. (\b : *. (\x : a. (\y : b. (id (pairT a b)
+  (sigma a (\x : a. b) x y))))))
 
 
 # Well founded types.
@@ -50,30 +50,30 @@ W = (\a : *. (\b : (@x : a. *).
       r))))
 
 sup = (\a : *. (\b : (@x : a. *). (\x : a. (\y : (@r : *. (@sel : (b x). r)).
-  ((id ((W a) b))
+  (id (W a b)
     (\r : *. (\f : (@x : a. (@y : (@sel : (b x). r). r)).
-      ((f x) (y r)))))))))
+      (f x (y r)))))))))
 
 # The identity type, which represents propositional equality.
 I = (\a : *. (\x : a. (\y : a.
   (@P : (@x : a. *). (@p : (P x). (P y))))))
 
-refl = (\a : *. (\x : a. ((id (((I a) x) x))
+refl = (\a : *. (\x : a. (id (I a x x)
   (\P : (@x : a. *). (\p : (P x). p)))))
 
 # Proof that if x = y, then y = x.
-sym = (\a : *. (\x : a. (\y : a. (\eq : (((I a) x) y). ((id (((I a) y) x))
-  ((eq (\xp : a. (((I a) xp) x))) ((refl a) x)))))))
+sym = (\a : *. (\x : a. (\y : a. (\eq : (I a x y). (id (I a y x)
+  (eq (\xp : a. (I a xp x)) (refl a x)))))))
 
 # Proof that if x = y and y = z, hen x = z.
 trans = (\a : *. (\x : a. (\y : a. (\z : a.
-  (\eqXY : (((I a) x) y). (\eqYZ : (((I a) y) z). ((id (((I a) x) z))
-    ((eqYZ (\yp : a. (((I a) x) yp))) eqXY))))))))
+  (\eqXY : (I a x y). (\eqYZ : (I a y z). (id (I a x z)
+    (eqYZ (\yp : a. (I a x yp)) eqXY))))))))
 
 # Proof that if x = y, then f x = f y.
 cong = (\a : *. (\b : *. (\x : a. (\y : a. (\f : (@x : a. b).
-  (\eq : (((I a) x) y). ((id (((I b) (f x)) (f y)))
-    ((eq (\xp : a. (((I b) (f x)) (f xp)))) ((refl b) (f x))))))))))
+  (\eq : (I a x y). (id (I b (f x) (f y))
+    (eq (\xp : a. (I b (f x) (f xp))) (refl b (f x))))))))))
 
 
 # The identity type for types.
@@ -81,9 +81,9 @@ cong = (\a : *. (\b : *. (\x : a. (\y : a. (\f : (@x : a. b).
 IT = (\x : *. (\y : *.
   (@P : (@x : *. *). (@p : (P x). (P y)))))
 
-reflT = (\x : *. ((id ((IT x) x))
+reflT = (\x : *. (id (IT x x)
   (\P : (@x : *. *). (\p : (P x). p))))
 
 ## Proof that if a = b and x : a, then x : b.
-typeEq = (\a : *. (\b : *. (\eq : ((IT a) b). ((id (@x : a. b))
-  ((eq (\ap : *. (@x : a. ap))) (id a))))))
+typeEq = (\a : *. (\b : *. (\eq : (IT a b). (id (@x : a. b)
+  (eq (\ap : *. (@x : a. ap)) (id a))))))

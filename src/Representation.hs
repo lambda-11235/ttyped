@@ -1,6 +1,7 @@
 
 module Representation where
 
+import Data.List (intersperse)
 import Data.Word
 
 
@@ -87,4 +88,9 @@ ppObject :: Object -> String
 ppObject (Var name index) = name ++ "[" ++ show index ++ "]"
 ppObject (Prod name t c) = "(∀" ++ name ++ " : " ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
 ppObject (Fun name t c) = "(λ" ++ name ++ " : " ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
-ppObject (App o1 o2) = "(" ++ ppObject o1 ++ " " ++ ppObject o2 ++ ")"
+ppObject (App o1 o2) = ppApps [o2] o1
+
+ppApps os (App o1 o2) = ppApps (o2:os) o1
+ppApps os o = ppApps' (o:os)
+  where
+    ppApps' os = "(" ++ (intersperse " " (map ppObject os) >>= id) ++ ")"

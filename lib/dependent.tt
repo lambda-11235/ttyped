@@ -8,7 +8,7 @@ boolT = (@a : *. (@b : *. *))
 falseT = (\a : *. (\b : *. a))
 trueT = (\a : *. (\b : *. b))
 
-foo = (\bt : boolT. (\x : ((bt unitT) bool). x))
+foo = (\bt : boolT. (\x : (bt unitT bool). x))
 
 
 # Example:

@@ -25,7 +25,7 @@ context = '*'
 object = sym
         | '(' , forall , sym , ':'  , term , '.' , object , ')' ;
         | '(' , lambda , sym , ':'  , term , '.' , object , ')' ;
-        | '(' , object , object ')' ;
+        | '(' , object , object , { object } ')' ;
 
 forall = '∀' | '@' ;
 pi = 'Π' | "||" ;
@@ -92,13 +92,13 @@ Type: (∀a : *. (∀x : a[0]. a[1]))
 λ> const
 Value: (λa : *. (λx : a[0]. (λb : *. (λy : b[0]. x[2]))))
 Type: (∀a : *. (∀x : a[0]. (∀b : *. (∀y : b[0]. a[3]))))
-λ> ((add two) three)
+λ> (add two three)
 Value: (λr : *. (λf : (∀x : r[0]. r[1]). (λx : r[1]. (f[1] (f[1] (f[1] (f[1] (f[1] x[0]))))))))
 Type: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
 λ> five
 Value: (λr : *. (λf : (∀x : r[0]. r[1]). (λx : r[1]. (f[1] (f[1] (f[1] (f[1] (f[1] x[0]))))))))
 Type: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
-λ> ((mult three) three)
+λ> (mult three three)
 Value: (λr : *. (λf : (∀x : r[0]. r[1]). (λx : r[1]. (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] x[0]))))))))))))
 Type: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
 λ> nine
@@ -115,9 +115,9 @@ Type: *
 
 The `id` pattern is a technique where we assert that an object has a certain
 type. Using `id`, defined in lib/base.tt as `(\a : *. (\x : a. x))`, we can
-write `((id A) x)` to assert that `x : A` when type checking. This is useful to
+write `(id A x)` to assert that `x : A` when type checking. This is useful to
 make sure a function has the right return type. For example, `add` in lib/nat.tt
-is defined as `(\n : natT. (\m : natT. ((id natT) ...)`. This pattern is used
+is defined as `(\n : natT. (\m : natT. (id natT ...)`. This pattern is used
 throughout the definitions in lib. It is also useful when using the REPL to
 determine the type of expressions.
 
