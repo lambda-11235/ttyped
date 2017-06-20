@@ -84,6 +84,17 @@ IT = (\x : *. (\y : *.
 reflT = (\x : *. (id (IT x x)
   (\P : (@x : *. *). (\p : (P x). p))))
 
+symT = (\a : *. (\b : *. (\eq : (IT a b). (id (IT b a)
+  (eq (\ap : *. (IT ap a)) (reflT a))))))
+
+transT = (\a : *. (\b : *. (\c : *.
+  (\eqAB : (IT a b). (\eqBC : (IT b c). (id (IT a c)
+    (eqBC (\bp : *. (IT a bp)) eqAB)))))))
+
+congT = (\a : *. (\b : *. (\P : (@a : *. *).
+  (\eq : (IT a b). (id (IT (P a) (P b))
+    (eq (\ap : *. (IT (P a) (P ap))) (reflT (P a))))))))
+
 ## Proof that if a = b and x : a, then x : b.
-typeEq = (\a : *. (\b : *. (\eq : (IT a b). (id (@x : a. b)
+typeConv = (\a : *. (\b : *. (\eq : (IT a b). (id (@x : a. b)
   (eq (\ap : *. (@x : a. ap)) (id a))))))

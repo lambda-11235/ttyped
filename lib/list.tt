@@ -13,3 +13,13 @@ map = (\a : *. (\b : *. (\f : (@x : a. b). (\xs : (list a). (id (list b)
   (xs (list b)
     (\x : a. (\y : (list b). (cons b (f x) y)))
     (nil b)))))))
+
+
+##### Proofs
+
+# Proof that if x = y and xs = ys, then cons x xs = cons y ys.
+consEq = (\a : *. (\x : a. (\y : a. (\xs : (list a). (\ys : (list a).
+  (\eqH : (I a x y). (\eqT : (I (list a) xs ys). (id (I (list a) (cons a x xs) (cons a y ys))
+    (eqH (\xp : a. (I (list a) (cons a x xs) (cons a xp ys)))
+         (eqT (\xsp : (list a). (I (list a) (cons a x xs) (cons a x xsp)))
+              (refl (list a) (cons a x xs))))))))))))
