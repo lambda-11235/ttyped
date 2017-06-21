@@ -67,4 +67,4 @@ fact = (\n : nat. (id nat
 
 # Proof that if n = m, then succ n = succ m.
 succEq = (\n : nat. (\m : nat. (\eq : (I nat n m). (id (I nat (succ n) (succ m))
-  (eq (\np : nat. (I nat (succ n) (succ np))) (refl nat (succ n)))))))
+  (cong nat nat n m succ eq)))))
