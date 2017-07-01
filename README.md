@@ -21,7 +21,7 @@ term = forall , argAndBody
      | lambda , argAndBody
      | explicit , { explicit } ;
 
-(* Here explicit and implicit refer to the use of parenthesis. *)
+(* Here explicit refers to the explicit use of parenthesis. *)
 explicit = '*'
          | sym
          | '(' , term , ')'
@@ -58,12 +58,12 @@ with function application.
 ## Semantics
 
 See "The Calculus of Constructions" by Coquand and Huet for the full semantics.
-One interesting to note is that the syntax given in the paper rules out unbound
-variables and forces `*` to be used only at the type level, while TTyped uses
-semantics checks. This is partly done to make parsing easier, as well as because
-TTyped uses Curry variables instead of de Bruijn indices in its syntax. These
-variables are then converted into de Bruijn indices for type checking and
-reduction.
+One interesting thing to note is that the syntax given in the paper rules out
+unbound variables and forces `*` to be used only at the type level, while TTyped
+uses separate semantics checks. This is partly done to make parsing easier, as
+well as because TTyped uses Church-style variables instead of de Bruijn indices
+in its syntax. These Church-style variables are then converted into de Bruijn
+indices for type checking and reduction.
 
 ## Example Session
 
@@ -83,8 +83,8 @@ Type: ∀a : *. ∀x : a. a
 
 Note that internally TTyped uses de Bruijn indices. Thus, there may be times
 when a variable name could refer to two **different** variables. For
-disimbaguation, such a variable name `v` its de Bruijn index `n` is also given
-using the notation `v[n]`. An example would be
+disambiguation, such a variable name `v` is also given with its de Bruijn index
+`n` using the notation `v[n]`. An example would be
 
 ```
 λ> \a : *. \a : a. a
