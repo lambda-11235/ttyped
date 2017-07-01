@@ -23,6 +23,9 @@ let unit = id
 let bool = @r : *. r -> r -> r
 let false = \r : *. \x : r. \y : r. x
 let true = \r : *. \x : r. \y : r. y
+let bnot = \b : bool. b bool true false
+let band = \x : bool. \y : bool. x bool x y
+let bor = \x : bool. \y : bool. x bool y x
 
 
 let sum = \a : *. \b : *. (@r : *. @f : (a -> r). @g : (b -> r). r)
@@ -39,11 +42,18 @@ let sigmaT = \a : *. \P : (a -> *). (@r : *. @f : (@x : a. (P x) -> r). r)
 let sigma = \a : *. \P : (@x : a. *). \x : a. \y : (P x). ret (sigmaT a P)
   (\r : *. \f : (@x : a. (P x) -> r). f x y)
 
+let fst = \a : *. \P : (a -> *). \s : (sigmaT a P). ret a
+  (s a (\x : a. \_ : (P x). x))
+
 
 let pairT = \a : *. \b : *. sigmaT a (\_ : a. b)
 
 let pair = \a : *. \b : *. \x : a. \y : b. ret (pairT a b)
   (sigma a (\_ : a. b) x y)
+
+# TODO: Can't figure out how to write this for sigma.
+let snd = \a : *. \b : *. \p : (pairT a b). ret b
+  (p b (\_ : a. \y : b. y))
 
 
 # The identity type, which represents propositional equality.

@@ -9,6 +9,9 @@ let zero = ret nat
 let succ = \n : nat. ret nat
   (\r : *. \f : (r -> r). \x : r. f (n r f x))
 
+let isZero = \n : nat. ret bool (n bool (\_ : bool. false) true)
+let isSucc = \n : nat. ret bool (n bool (\_ : bool. true) false)
+
 let one = succ zero
 let two = succ one
 let three = succ two
@@ -50,6 +53,22 @@ let pred = \n : nat. ret nat
 # The subtraction function. if m < n then m - n = 0.
 let sub = \n : nat. \m : nat. ret nat
   (m nat pred n)
+
+
+# n > m, n < m, and n = m, respectively.
+let greaterThan = \n : nat. \m : nat. ret bool (isSucc (sub n m))
+let lessThan = \n : nat. \m : nat. greaterThan m n
+let equal = \n : nat. \m : nat. bnot (bor (greaterThan n m) (lessThan n m))
+
+
+# Returns a pair of the quotient and remainder, respectively, of the division of
+# n by m.
+let divRem = \n : nat. \m : nat. ret PNT
+  (n PNT
+    (\pnt : PNT. pnt PNT (\q : nat. \r : nat.
+      (lessThan (succ r) m) PNT (PN (succ q) zero) (PN q (succ r))))
+    (PN zero zero))
+
 
 # Computes the factorial of a natural number.
 let fact = \n : nat. ret nat
