@@ -111,10 +111,13 @@ ppObject' vars expParen (Prod name t c) =
 ppObject' vars expParen (Fun name t o) =
   let s = "λ" ++ name ++ " : " ++ ppTerm' vars True t ++ ". " ++ ppObject' (name:vars) False o
    in maybeParen expParen s
-ppObject' vars expParen (App o1 o2) =
-  let s = (ppObject' vars True o1) ++ " " ++ (ppObject' vars True o2)
-   in maybeParen expParen s
+ppObject' vars expParen (App o1 o2) = ppApps vars expParen [o2] o1
 
 maybeParen :: Bool -> String -> String
 maybeParen False s = s
 maybeParen True s = "(" ++ s ++ ")"
+
+ppApps vars expParen os (App o1 o2) = ppApps vars expParen (o2:os) o1
+ppApps vars expParen os o = ppApps' (o:os)
+  where
+    ppApps' os = maybeParen expParen (intersperse " " (map (ppObject' vars True) os) >>= id)
