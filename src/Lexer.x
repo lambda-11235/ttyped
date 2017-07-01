@@ -17,6 +17,8 @@ tokens :-
   "("                                   { \p s -> lexOut p LLParen }
   ")"                                   { \p s -> lexOut p LRParen }
 
+  "->"                                  { \p s -> lexOut p LArrow }
+
   ":"                                   { \p s -> lexOut p LColon }
 
   "."                                   { \p s -> lexOut p LDot }
@@ -33,12 +35,15 @@ tokens :-
 
   "*"                                   { \p s -> lexOut p LStar }
 
+  "_"                                   { \p s -> lexOut p LUnderscore }
+
   -- @digit+                               { \p s -> lexOut p (LNumber (read s)) }
   @char+                                { \p s -> lexOut p (LSym s) }
 
 {
 data Token = LLParen
            | LRParen
+           | LArrow
            | LColon
            | LDot
            | LEqual
@@ -46,6 +51,7 @@ data Token = LLParen
            | LLambda
            | LLet
            | LStar
+           | LUnderscore
            -- | LNumber Nat
            | LSym String
            deriving (Eq, Show)

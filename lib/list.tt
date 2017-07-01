@@ -1,15 +1,15 @@
 
-let list = \a : *. (@r : *. @f : (@x : a. @y : r. r). @b : r. r)
+let list = \a : *. (@r : *. (a -> r -> r) -> r -> r)
 
 let nil = \a : *. ret (list a)
-  (\r : *. \f : (@x : a. @y : r. r). \b : r. b)
+  (\r : *. \f : (a -> r -> r). \b : r. b)
 
 let cons = \a : *. \x : a. \xs : (list a). ret (list a)
-        (\r : *. \f : (@x : a. @y : r. r). \b : r.
+        (\r : *. \f : (a -> r -> r). \b : r.
          f x (xs r f b))
 
 
-let map = \a : *. \b : *. \f : (@x : a. b). \xs : (list a). ret (list b)
+let map = \a : *. \b : *. \f : (a -> b). \xs : (list a). ret (list b)
   (xs (list b)
     (\x : a. \y : (list b). cons b (f x) y)
     (nil b))

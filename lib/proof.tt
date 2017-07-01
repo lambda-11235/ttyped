@@ -1,14 +1,14 @@
 
 # A proof that (∀(x ∈ A), ¬(P x)) → ¬(∃(x ∈ A), P x).
 
-let allNotExist = \a : *. \P : (@x : a. *). \all : (@x : a. not (P x)).
+let allNotExist = \a : *. \P : (a -> *). \all : (@x : a. not (P x)).
   ret (not (sigmaT a P))
     (\exists : (sigmaT a P). exists bot all)
 
 
 # A proof that (∃(x ∈ A), ¬(P x)) → ¬(∀(x ∈ A), P x).
 
-let existNotAll = \a : *. \P : (@x : a. *).
+let existNotAll = \a : *. \P : (a -> *).
   \exists : (sigmaT a (\x : a. not (P x))).
   ret (not (@x : a. P x))
     (\all : (@x : a. P x).

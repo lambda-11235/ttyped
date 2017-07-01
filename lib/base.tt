@@ -1,14 +1,14 @@
 
 # The identity function of types of type *, as well as its type.
-let idT = @a : *. @x : a. a
+let idT = @a : *. a -> a
 let id = \a : *. \x : a. x
 
 # A version of id used to identify the return type.
 let ret = id
 
-let const = \a : *. \x : a. \b : *. \y : b. x
+let const = \a : *. \x : a. \b : *. \_ : b. x
 
-let comp = \a : *. \b : *. \c : *. \f : (@x : b. c). \g : (@x : a. b).
+let comp = \a : *. \b : *. \c : *. \f : (b -> c). \g : (a -> b).
   \x : a. f (g x)
 
 
@@ -20,38 +20,38 @@ let unitT = idT
 let unit = id
 
 
-let bool = @r : *. @x : r. @y : r. r
+let bool = @r : *. r -> r -> r
 let false = \r : *. \x : r. \y : r. x
 let true = \r : *. \x : r. \y : r. y
 
 
-let sum = \a : *. \b : *. (@r : *. @f : (@x : a. r). @g : (@y : b. r). r)
+let sum = \a : *. \b : *. (@r : *. @f : (a -> r). @g : (b -> r). r)
 
 let injL = \a : *. \b : *. \x : a. ret (sum a b)
-  (\r : *. \f : (@x : a. r). \g : (@y : b. r). f x)
+  (\r : *. \f : (a -> r). \g : (b -> r). f x)
 
 let injR = \a : *. \b : *. \y : b. ret (sum a b)
-  (\r : *. \f : (@x : a. r). \g : (@y : b. r). g y)
+  (\r : *. \f : (a -> r). \g : (b -> r). g y)
 
 
-let sigmaT = \a : *. \P : (@x : a. *). (@r : *. @f : (@x : a. @y : (P x). r). r)
+let sigmaT = \a : *. \P : (a -> *). (@r : *. @f : (@x : a. (P x) -> r). r)
 
 let sigma = \a : *. \P : (@x : a. *). \x : a. \y : (P x). ret (sigmaT a P)
-  (\r : *. \f : (@x : a. @y : (P x). r). f x y)
+  (\r : *. \f : (@x : a. (P x) -> r). f x y)
 
 
-let pairT = \a : *. \b : *. sigmaT a (\x : a. b)
+let pairT = \a : *. \b : *. sigmaT a (\_ : a. b)
 
 let pair = \a : *. \b : *. \x : a. \y : b. ret (pairT a b)
-  (sigma a (\x : a. b) x y)
+  (sigma a (\_ : a. b) x y)
 
 
 # The identity type, which represents propositional equality.
 let I = \a : *. \x : a. \y : a.
-  (@P : (@x : a. *). @p : (P x). P y)
+  (@P : (a -> *). (P x) -> (P y))
 
 let refl = \a : *. \x : a. ret (I a x x)
-  (\P : (@x : a. *). \p : (P x). p)
+  (\P : (a -> *). \p : (P x). p)
 
 # Proof that if x = y, then y = x.
 let sym = \a : *. \x : a. \y : a. \eq : (I a x y). ret (I a y x)
@@ -71,10 +71,10 @@ let cong = \a : *. \b : *. \x : a. \y : a. \f : (@x : a. b).
 # The identity type for types.
 # TODO: Define sym, trans, and cong.
 let IT = \x : *. \y : *.
-  (@P : (@x : *. *). @p : (P x). P y)
+  (@P : (* -> *). (P x) -> (P y))
 
 let reflT = \x : *. ret (IT x x)
-  (\P : (@x : *. *). \p : (P x). p)
+  (\P : (* -> *). \p : (P x). p)
 
 let symT = \a : *. \b : *. \eq : (IT a b). ret (IT b a)
   (eq (\ap : *. IT ap a) (reflT a))
@@ -83,10 +83,10 @@ let transT = \a : *. \b : *. \c : *.
   \eqAB : (IT a b). \eqBC : (IT b c). ret (IT a c)
     (eqBC (\bp : *. IT a bp) eqAB)
 
-let congT = \a : *. \b : *. \P : (@a : *. *).
+let congT = \a : *. \b : *. \P : (* -> *).
   \eq : (IT a b). ret (IT (P a) (P b))
     (eq (\ap : *. IT (P a) (P ap)) (reflT (P a)))
 
 ## Proof that if a = b and x : a, then x : b.
-let typeConv = \a : *. \b : *. \eq : (IT a b). ret (@x : a. b)
-  (eq (\ap : *. (@x : a. ap)) (id a))
+let typeConv = \a : *. \b : *. \eq : (IT a b). ret (a -> b)
+  (eq (\ap : *. (a -> ap)) (id a))

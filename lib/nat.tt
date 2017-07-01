@@ -1,13 +1,13 @@
 
 # Natural numbers.
 
-let nat = @r : *. @f : (@x : r. r). @x : r. r
+let nat = @r : *. (r -> r) -> r -> r
 
 let zero = ret nat
-  (\r : *. \f : (@x : r. r). \x : r. x)
+  (\r : *. \f : (r -> r). \x : r. x)
 
 let succ = \n : nat. ret nat
-  (\r : *. \f : (@x : r. r). \x : r. f (n r f x))
+  (\r : *. \f : (r -> r). \x : r. f (n r f x))
 
 let one = succ zero
 let two = succ one

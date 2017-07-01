@@ -4,9 +4,9 @@
 # be done in System Fω.
 
 # A boolean that operates over types.
-let boolT = @a : *. @b : *. *
-let falseT = \a : *. \b : *. a
-let trueT = \a : *. \b : *. b
+let boolT = * -> * -> *
+let falseT = \a : *. \_ : *. a
+let trueT = \_ : *. \b : *. b
 
 let foo = \bt : boolT. \x : (bt unitT bool). x
 

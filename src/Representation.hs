@@ -20,7 +20,7 @@ data Term = C Context
 
 
 data Context = Star
-             | Quant String Term Context
+             | Quant (Maybe String) Term Context
              deriving (Eq, Show)
 
 contextLength :: Context -> Nat
@@ -31,7 +31,7 @@ concatContext :: Context -> Context -> Context
 concatContext Star c = c
 concatContext (Quant name t c1) c2 = Quant name t (concatContext c1 c2)
 
-concatTerm :: Context -> String -> Term -> Context
+concatTerm :: Context -> Maybe String -> Term -> Context
 concatTerm c name t = concatContext c (Quant name t Star)
 
 mapContext :: (Term -> Term) -> Context -> Context
@@ -40,8 +40,8 @@ mapContext f (Quant name t c) = Quant name (f t) (mapContext f c)
 
 
 data Object = Var String Nat
-            | Prod String Term Object
-            | Fun String Term Object
+            | Prod (Maybe String) Term Object
+            | Fun (Maybe String) Term Object
             | App Object Object
             deriving (Eq, Show)
 
@@ -75,6 +75,9 @@ addObject' n (Fun name t o) idx =
 addObject' n (App o1 o2) idx = App (addObject' n o1 idx) (addObject' n o2 idx)
 
 
+
+-- * Pretty Printing
+
 ppTerm :: Term -> String
 ppTerm = ppTerm' [] False
 
@@ -95,11 +98,17 @@ ppTerm' :: [String] -> Bool -> Term -> String
 ppTerm' vars expParen (C c) = ppContext' vars expParen c
 ppTerm' vars expParen (O o) = ppObject' vars expParen o
 
+-- TODO: Remove duplication between pretty print Quant, Prod, and Fun.
+
 ppContext' :: [String] -> Bool -> Context -> String
 ppContext' _ _ Star = "*"
-ppContext' vars expParen (Quant name t c) =
-  let s = "∀" ++ name ++ " : " ++ ppTerm' vars True t ++ ". " ++ ppContext' (name:vars) False c
-   in maybeParen expParen s
+ppContext' vars expParen (Quant Nothing t c) =
+  let s = ppTerm' vars True t
+  in ppQuant (unusedName:vars) expParen [s] c
+ppContext' vars expParen (Quant (Just name) t c) =
+  let s = "∀" ++ name ++ " : " ++ ppTerm' vars True t ++ ". "
+        ++ ppContext' (name:vars) False c
+  in maybeParen expParen s
 
 ppObject' :: [String] -> Bool -> Object -> String
 ppObject' vars _ (Var name index) =
@@ -108,17 +117,50 @@ ppObject' vars _ (Var name index) =
   if maybe 0 fromIntegral (findIndex (== name) vars) /= index
   then name ++ "[" ++ show index ++ "]"
   else name
-ppObject' vars expParen (Prod name t c) =
-  let s = "∀" ++ name ++ " : " ++ ppTerm' vars True t ++ ". " ++ ppObject' (name:vars) False c
-   in maybeParen expParen s
+ppObject' vars expParen (Prod Nothing t o) =
+  let s = ppTerm' vars True t
+  in ppFunType (unusedName:vars) expParen [s] o
+ppObject' vars expParen (Prod (Just name) t o) =
+  let s = "∀" ++  name++ " : " ++ ppTerm' vars True t ++ ". "
+        ++ ppObject' (name:vars) False o
+  in maybeParen expParen s
 ppObject' vars expParen (Fun name t o) =
-  let s = "λ" ++ name ++ " : " ++ ppTerm' vars True t ++ ". " ++ ppObject' (name:vars) False o
-   in maybeParen expParen s
+  let name' = ppArgName name
+      s = "λ" ++ name' ++ " : " ++ ppTerm' vars True t ++ ". "
+        ++ ppObject' (name':vars) False o
+  in maybeParen expParen s
 ppObject' vars expParen (App o1 o2) = ppApps vars expParen [o2] o1
+
+
+unusedName :: String
+unusedName = "_"
+
+ppArgName :: Maybe String -> String
+ppArgName Nothing = unusedName
+ppArgName (Just s) = s
 
 maybeParen :: Bool -> String -> String
 maybeParen False s = s
 maybeParen True s = "(" ++ s ++ ")"
+
+
+ppQuant vars expParen ss (Quant Nothing t c) =
+  let s = ppTerm' vars True t
+  in ppQuant (unusedName:vars) expParen (s:ss) c
+ppQuant vars expParen ss c =
+  maybeParen expParen (ppQ (reverse ss) ++ " -> " ++ ppContext' vars True c)
+  where
+    ppQ ss = intersperse " -> " ss >>= id
+
+
+ppFunType vars expParen ss (Prod Nothing t o) =
+  let s = ppTerm' vars True t
+  in ppFunType (unusedName:vars) expParen (s:ss) o
+ppFunType vars expParen ss o =
+  maybeParen expParen (ppFT (reverse ss) ++ " -> " ++ ppObject' vars True o)
+  where
+    ppFT ss = intersperse " -> " ss >>= id
+
 
 ppApps vars expParen os (App o1 o2) = ppApps vars expParen (o2:os) o1
 ppApps vars expParen os o = ppApps' (o:os)

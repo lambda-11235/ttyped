@@ -56,7 +56,7 @@ ast :: Parser AST
 ast = term
 
 
-term = quant <|> fun <|> app
+term = quant <|> fun <|> funTypeOrApp
 
 quant = do match LForall
            argAndBody Quant
@@ -65,16 +65,19 @@ fun = do match LLambda
          argAndBody Fun
 
 argAndBody constructor =
-  do name <- sym
+  do name <- (match LUnderscore *> return Nothing) <|> (fmap Just sym)
      match LColon
      t <- explicit
      match LDot
      b <- term
      return (constructor name t b)
 
-app = do o <- explicit
-         os <- many explicit
-         return (foldl App o os)
+funTypeOrApp =
+  do x <- explicit
+     xs <- fmap Left (many1 (match LArrow *> explicit)) <|> fmap Right (many explicit)
+     case xs of
+       Left ts -> return (foldr1 (Quant Nothing) (x:ts))
+       Right os ->return (foldl App x os)
 
 
 explicit = (match LStar *> pure Star) <|> (fmap Var sym) <|> parened

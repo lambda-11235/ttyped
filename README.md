@@ -10,7 +10,8 @@ There is also a version based on intuitionistic type theory in the branch
 
 ## Syntax
 
-Comment lines start with a `#` and extend to the end of the line.
+Comment lines start with a `#` and extend to the end of the line. Underscore
+(`_`) denote an ignored variable.
 
 ### EBNF
 
@@ -19,14 +20,14 @@ The grammar for the core language is
 ```
 term = forall , argAndBody
      | lambda , argAndBody
-     | explicit , { explicit } ;
+     | explicit , ( { "->" , explicit } | { explicit } ) ;
 
 (* Here explicit refers to the explicit use of parenthesis. *)
 explicit = '*'
          | sym
          | '(' , term , ')'
 
-argAndBody = sym , ':' , explicit , '.' , term ;
+argAndBody = ( "_" | sym ) , ':' , explicit , '.' , term ;
 
 forall = '∀' | '@' ;
 lambda = 'λ' | '\' ;
@@ -75,10 +76,10 @@ indices for type checking and reduction.
 λ> id
 Value: λa : *. λx : a. x
 Type: ∀a : *. ∀x : a. a
-λ> let idT = @a : *. @x : a. a
+λ> let idT = @a : *. a -> a
 λ> id idT id
 Value: λa : *. λx : a. x
-Type: ∀a : *. ∀x : a. a
+Type: ∀a : *. a -> a
 ```
 
 Note that internally TTyped uses de Bruijn indices. Thus, there may be times
@@ -105,23 +106,22 @@ Files that contain bindings can also be preloaded.
 Value: λa : *. λx : a. x
 Type: ∀a : *. ∀x : a. a
 λ> const
-Value: λa : *. λx : a. λb : *. λy : b. x
-Type: ∀a : *. ∀x : a. ∀b : *. ∀y : b. a
+Value: λa : *. λx : a. λb : *. λ_ : b. x
+Type: ∀a : *. ∀x : a. ∀b : *. b -> a
 λ> add two three
-Value: λr : *. λf : (∀x : r. r). λx : r. f (f (f (f (f x))))
-Type: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
+Value: λr : *. λf : (r -> r). λx : r. f (f (f (f (f x))))
+Type: ∀r : *. (r -> r) -> r -> r
 λ> five
-Value: λr : *. λf : (∀x : r. r). λx : r. f (f (f (f (f x))))
-Type: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
+Value: λr : *. λf : (r -> r). λx : r. f (f (f (f (f x))))
+Type: ∀r : *. ∀f : (r -> r). ∀x : r. r
 λ> mult three three
-Value: λr : *. λf : (∀x : r. r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
-Type: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
+Value: λr : *. λf : (r -> r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
+Type: ∀r : *. (r -> r) -> r -> r
 λ> nine
-Value: λr : *. λf : (∀x : r. r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
-Type: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
+Value: λr : *. λf : (r -> r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
+Type: ∀r : *. ∀f : (r -> r). ∀x : r. r
 λ> nat
-Value: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
-Type: *
+Value: ∀r : *. (r -> r) -> r -> r
 ```
 
 ## Notes
@@ -137,5 +137,11 @@ throughout the definitions in lib. It is also useful when using the REPL to
 determine the type of expressions.
 
 ## TODO
+
+- The pretty printer is kinda dumb when it comes to the short hand for function
+  types (ie. `a -> b`). It will only print pi types this way if they ignore
+  their first argument (ie. have the form `@_ : a. b`). Functions like `\x : a.
+  x` have the infered type of `@x : a. a`, and thus will not have types printed
+  as `a -> a`. This should be fixed.
 
 - Add better AST conversion and type errors.

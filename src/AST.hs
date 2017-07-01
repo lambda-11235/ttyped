@@ -27,9 +27,9 @@ data Binding = Binding String AST
 -- | The AST is basically just the context and object level squashed down into
 -- one term language.
 data AST = Star
-         | Quant String AST AST
+         | Quant (Maybe String) AST AST
          | Var String
-         | Fun String AST AST
+         | Fun (Maybe String) AST AST
          | App AST AST
          deriving (Eq, Show)
 
@@ -49,7 +49,8 @@ toTerm ast binds = toTerm' ast binds []
     toTerm' Star _ _ = return (R.C R.Star)
     toTerm' (Quant name t b) binds vars =
       do t' <- toTerm' t binds vars
-         b' <- toTerm' b binds (name:vars)
+         let name' = maybe R.unusedName id name
+         b' <- toTerm' b binds (name':vars)
          case b' of
            (R.C c) -> return (R.C (R.Quant name t' c))
            (R.O o) -> return (R.O (R.Prod name t' o))
@@ -60,7 +61,8 @@ toTerm ast binds = toTerm' ast binds []
                      Just t -> return t
                      Nothing -> Left (Undeclared name)
     toTerm' (Fun name t b) binds vars =
-      do b' <- toTerm' b binds (name:vars)
+      do let name' = maybe R.unusedName id name
+         b' <- toTerm' b binds (name':vars)
          R.O <$> ((R.Fun name) <$> (toTerm' t binds vars) <*> (assertObject b'))
     toTerm' (App o1 o2) binds vars =
       do o1' <- toTerm' o1 binds vars
