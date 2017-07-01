@@ -8,6 +8,7 @@ import Data.Foldable (foldlM, foldrM)
 
 
 data Error = VarNotInContext String Context
+           | InvalidArgType Term
            | TypeMismatch Term Term
            | NonQuantTypeApplied Term Term
            deriving (Eq, Show)
@@ -15,6 +16,8 @@ data Error = VarNotInContext String Context
 ppError :: Error -> String
 ppError (VarNotInContext name context) = "Variable " ++ name
   ++ " not in context " ++ ppContext context
+ppError (InvalidArgType t) = "Invalid argument type " ++ ppTerm t
+  ++ ", argument type must either be a context or an object of type *"
 ppError (TypeMismatch t1 t2) = "Got " ++ ppTerm t2 ++ " when expecting " ++ ppTerm t1
 ppError (NonQuantTypeApplied t1 t2) = "Non quantified type " ++ ppTerm t1
   ++ " applied to " ++ ppTerm t2
@@ -22,29 +25,29 @@ ppError (NonQuantTypeApplied t1 t2) = "Non quantified type " ++ ppTerm t1
 
 
 
-checkTerm :: Term -> Context -> Either Error Term
-checkTerm (C c) context = fmap C (checkContext c context)
-checkTerm (O o) context = checkObject o context
+checkTerm :: Term -> Context -> Either Error ()
+checkTerm (C c) context = checkContext c context
+checkTerm (O o) context = checkObject o context >> return ()
 
 
--- Returns the first argument if there's no error.
-checkContext :: Context -> Context -> Either Error Context
-checkContext Star _ = return Star
+-- | Checks that argument types in a context are well typed.
+checkContext :: Context -> Context -> Either Error ()
+checkContext Star _ = return ()
 checkContext (Quant name t c) context =
-  do checkTerm t context
+  do checkArgType t context
      checkContext c (concatTerm context name t)
-     return (Quant name (reduceTerm t) (reduceContext c))
+     return ()
 
 
 -- | Returns the type of the object passed in if there's no errors.
 checkObject :: Object -> Context -> Either Error Term
 checkObject (Var name index) context = asSeenFrom name index context
 checkObject (Prod name t o) context =
-  do checkTerm t context
+  do checkArgType t context
      checkObject o (concatTerm context name (reduceTerm t))
      return (C Star)
 checkObject (Fun name t o) context =
-  do checkTerm t context
+  do checkArgType t context
      let t' = reduceTerm t
      ot <- checkObject o (concatTerm context name t')
      case ot of
@@ -57,6 +60,16 @@ checkObject (App o1 o2) context =
      checkTerm o2t context
      o3 <- checkApply (reduceTerm o1t) (reduceTerm o2t) o2
      return (reduceTerm o3)
+
+
+-- | Checks that the type of an an argument is well typed.
+-- Argument types should either be contexts or objects of type *.
+checkArgType :: Term -> Context -> Either Error ()
+checkArgType (C c) ctx = checkContext c ctx
+checkArgType (O o) ctx = do t <- checkObject o ctx
+                            case t of
+                              C Star -> return ()
+                              _ -> Left (InvalidArgType t)
 
 
 -- | Gets the type of a variable as seen from its surrounding context.
