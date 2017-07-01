@@ -1,25 +1,15 @@
 
 # A proof that (∀(x ∈ A), ¬(P x)) → ¬(∃(x ∈ A), P x).
 
-allNotExist = (\a : *. (\P : (@x : a. *). (\all : (@x : a. (not (P x))).
-  (\exists : ((sigmaT a) P). ((exists bot) all)))))
-
-allNotExistP = ((id
-  (@a : *. (@P : (@x : a. *).
-    (@all : (@x : a. (not (P x))).
-      (not ((sigmaT a) P))))))
-  allNotExist)
+let allNotExist = \a : *. \P : (@x : a. *). \all : (@x : a. not (P x)).
+  ret (not (sigmaT a P))
+    (\exists : (sigmaT a P). exists bot all)
 
 
 # A proof that (∃(x ∈ A), ¬(P x)) → ¬(∀(x ∈ A), P x).
 
-existNotAll = (\a : *. (\P : (@x : a. *).
-  (\exists : ((sigmaT a) (\x : a. (not (P x)))).
-  (\all : (@x : a. (P x)).
-    ((exists bot) (\x : a. (\y : (not (P x)). (y (all x)))))))))
-
-existNotAllP = ((id
-  (@a : *. (@P : (@x : a. *).
-    (@exists : ((sigmaT a) (\x : a. (not (P x)))).
-      (not (@x : a. (P x)))))))
-  existNotAll)
+let existNotAll = \a : *. \P : (@x : a. *).
+  \exists : (sigmaT a (\x : a. not (P x))).
+  ret (not (@x : a. P x))
+    (\all : (@x : a. P x).
+      exists bot (\x : a. \y : (not (P x)). y (all x)))

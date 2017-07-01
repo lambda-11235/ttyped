@@ -1,25 +1,26 @@
 
-list = (\a : *. (@r : *. (@f : (@x : a. (@y : r. r)). (@b : r. r))))
+let list = \a : *. (@r : *. @f : (@x : a. @y : r. r). @b : r. r)
 
-nil = (\a : *. (id (list a)
-  (\r : *. (\f : (@x : a. (@y : r. r)). (\b : r. b)))))
+let nil = \a : *. ret (list a)
+  (\r : *. \f : (@x : a. @y : r. r). \b : r. b)
 
-cons = (\a : *. (\x : a. (\xs : (list a). (id (list a)
-        (\r : *. (\f : (@x : a. (@y : r. r)). (\b : r.
-         (f x (xs r f b)))))))))
+let cons = \a : *. \x : a. \xs : (list a). ret (list a)
+        (\r : *. \f : (@x : a. @y : r. r). \b : r.
+         f x (xs r f b))
 
 
-map = (\a : *. (\b : *. (\f : (@x : a. b). (\xs : (list a). (id (list b)
+let map = \a : *. \b : *. \f : (@x : a. b). \xs : (list a). ret (list b)
   (xs (list b)
-    (\x : a. (\y : (list b). (cons b (f x) y)))
-    (nil b)))))))
+    (\x : a. \y : (list b). cons b (f x) y)
+    (nil b))
 
 
 ##### Proofs
 
 # Proof that if x = y and xs = ys, then cons x xs = cons y ys.
-consEq = (\a : *. (\x : a. (\y : a. (\xs : (list a). (\ys : (list a).
-  (\eqH : (I a x y). (\eqT : (I (list a) xs ys). (id (I (list a) (cons a x xs) (cons a y ys))
-    (eqH (\xp : a. (I (list a) (cons a x xs) (cons a xp ys)))
-         (eqT (\xsp : (list a). (I (list a) (cons a x xs) (cons a x xsp)))
-              (refl (list a) (cons a x xs))))))))))))
+let consEq = \a : *. \x : a. \y : a. \xs : (list a). \ys : (list a).
+  \eqH : (I a x y). \eqT : (I (list a) xs ys).
+  ret (I (list a) (cons a x xs) (cons a y ys))
+    (eqH (\xp : a. I (list a) (cons a x xs) (cons a xp ys))
+      (eqT (\xsp : (list a). I (list a) (cons a x xs) (cons a x xsp))
+        (refl (list a) (cons a x xs))))

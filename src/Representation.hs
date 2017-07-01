@@ -76,21 +76,45 @@ addObject' n (App o1 o2) idx = App (addObject' n o1 idx) (addObject' n o2 idx)
 
 
 ppTerm :: Term -> String
-ppTerm (C c) = ppContext c
-ppTerm (O o) = ppObject o
+ppTerm = ppTerm' [] False
 
 ppContext :: Context -> String
-ppContext Star = "*"
-ppContext (Quant name t c) =
-  "(∀" ++ name ++ " : " ++ ppTerm t ++ ". " ++ ppContext c ++ ")"
+ppContext = ppContext' [] False
 
 ppObject :: Object -> String
-ppObject (Var name index) = name ++ "[" ++ show index ++ "]"
-ppObject (Prod name t c) = "(∀" ++ name ++ " : " ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
-ppObject (Fun name t c) = "(λ" ++ name ++ " : " ++ ppTerm t ++ ". " ++ ppObject c ++ ")"
-ppObject (App o1 o2) = ppApps [o2] o1
+ppObject = ppObject' [] False
 
-ppApps os (App o1 o2) = ppApps (o2:os) o1
-ppApps os o = ppApps' (o:os)
-  where
-    ppApps' os = "(" ++ (intersperse " " (map ppObject os) >>= id) ++ ")"
+{-
+   For all the following functions the first argument is a list of bound
+   varibles, and the second argument determines whether the term should be
+   explicitly parenthesized.
+-}
+
+ppTerm' :: [String] -> Bool -> Term -> String
+ppTerm' vars expParen (C c) = ppContext' vars expParen c
+ppTerm' vars expParen (O o) = ppObject' vars expParen o
+
+ppContext' :: [String] -> Bool -> Context -> String
+ppContext' _ _ Star = "*"
+ppContext' vars expParen (Quant name t c) =
+  let s = "∀" ++ name ++ " : " ++ ppTerm' vars True t ++ ". " ++ ppContext' (name:vars) False c
+   in maybeParen expParen s
+
+ppObject' :: [String] -> Bool -> Object -> String
+ppObject' vars _ (Var name index) =
+  if length (filter (== name) vars) > 1
+  then name ++ "[" ++ show index ++ "]"
+  else name
+ppObject' vars expParen (Prod name t c) =
+  let s = "∀" ++ name ++ " : " ++ ppTerm' vars True t ++ ". " ++ ppObject' (name:vars) False c
+   in maybeParen expParen s
+ppObject' vars expParen (Fun name t o) =
+  let s = "λ" ++ name ++ " : " ++ ppTerm' vars True t ++ ". " ++ ppObject' (name:vars) False o
+   in maybeParen expParen s
+ppObject' vars expParen (App o1 o2) =
+  let s = (ppObject' vars True o1) ++ " " ++ (ppObject' vars True o2)
+   in maybeParen expParen s
+
+maybeParen :: Bool -> String -> String
+maybeParen False s = s
+maybeParen True s = "(" ++ s ++ ")"

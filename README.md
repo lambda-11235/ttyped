@@ -14,21 +14,21 @@ Comment lines start with a `#` and extend to the end of the line.
 
 ### EBNF
 
-The core language that the type checker and reduce operate on has the grammar
+The grammar for the core language is
 
 ```
-term = context | object ;
+term = forall , argAndBody
+     | lambda , argAndBody
+     | explicit , { explicit } ;
 
-context = '*'
-        | '(' , forall , sym , ':' , term , '.' , context , ')' ;
+(* Here explicit and implicit refer to the use of parenthesis. *)
+explicit = '*'
+         | sym
+         | '(' , term , ')'
 
-object = sym
-        | '(' , forall , sym , ':'  , term , '.' , object , ')' ;
-        | '(' , lambda , sym , ':'  , term , '.' , object , ')' ;
-        | '(' , object , object , { object } ')' ;
+argAndBody = sym , ':' , explicit , '.' , term ;
 
 forall = '∀' | '@' ;
-pi = 'Π' | "||" ;
 lambda = 'λ' | '\' ;
 
 sym = char , { char } ;
@@ -43,13 +43,27 @@ files. These bindings have the form
 ```
 repl = bind | object ;
 
-bind = sym , '=' , object ;
+bind = "let" , sym , '=' , object ;
 ```
+
+also `sym` becomes
+
+```
+sym = ( char , { char } ) - "let" ;
+```
+
+The `let` keyword is necessary to avoid backtracing in the parser and ambiguity
+with function application.
 
 ## Semantics
 
-See "The Calculus of Constructions" by Coquand and Huet. The underlying reducer
-and type checker use de Bruijn indices.
+See "The Calculus of Constructions" by Coquand and Huet for the full semantics.
+One interesting to note is that the syntax given in the paper rules out unbound
+variables and forces `*` to be used only at the type level, while TTyped uses
+semantics checks. This is partly done to make parsing easier, as well as because
+TTyped uses Curry variables instead of de Bruijn indices in its syntax. These
+variables are then converted into de Bruijn indices for type checking and
+reduction.
 
 ## Example Session
 
@@ -57,29 +71,29 @@ and type checker use de Bruijn indices.
 > stack build
 > stack exec ttyped
 
-λ> id = (\a : *. (\x : a. x))
+λ> let id = \a : *. \x : a. x
 λ> id
-Value: (λa : *. (λx : a[0]. x[0]))
-Type: (∀a : *. (∀x : a[0]. a[1]))
-λ> idT = (@a : *. (@x : a. a))
-λ> ((id idT) id)
-Value: (λa : *. (λx : a[0]. x[0]))
-Type: (∀a : *. (∀x : a[0]. a[1]))
+Value: λa : *. λx : a. x
+Type: ∀a : *. ∀x : a. a
+λ> let idT = @a : *. @x : a. a
+λ> id idT id
+Value: λa : *. λx : a. x
+Type: ∀a : *. ∀x : a. a
 ```
 
-The printed variables are displayed in the form `v[n]` for some number `n`. This
-number represents the de Bruijn index of the variable, and is displayed because
-all reductions and type checking is done with de Bruijn indices. Thus, there are
-case where the same variable name may have different scopes. An example is
+Note that internally TTyped uses de Bruijn indices. Thus, there may be times
+when a variable name could refer to two **different** variables. For
+disimbaguation, such a variable name `v` its de Bruijn index `n` is also given
+using the notation `v[n]`. An example would be
 
 ```
-λ> (\a : *. (\a : a. a))
-Value: (λa : *. (λa : a[0]. a[0]))
-Type: (∀a : *. (∀a : a[0]. a[1]))
+λ> \a : *. \a : a. a
+Value: λa : *. λa : a. a[0]
+Type: ∀a : *. ∀a : a. a[1]
 ```
 
-Notice how in the type `(∀a : *. (∀a : a[0]. a[1]))` the innermost `a` refers to
-the outerbound `a`, and not the inner bound `a`.
+Notice how in the value the trailing `a` refers to the second variable, while in
+the type it refers to the first variable.
 
 Files that contain bindings can also be preloaded.
 
@@ -87,37 +101,37 @@ Files that contain bindings can also be preloaded.
 > stack exec ttyped lib/base.tt lib/nat.tt
 
 λ> id
-Value: (λa : *. (λx : a[0]. x[0]))
-Type: (∀a : *. (∀x : a[0]. a[1]))
+Value: λa : *. λx : a. x
+Type: ∀a : *. ∀x : a. a
 λ> const
-Value: (λa : *. (λx : a[0]. (λb : *. (λy : b[0]. x[2]))))
-Type: (∀a : *. (∀x : a[0]. (∀b : *. (∀y : b[0]. a[3]))))
-λ> (add two three)
-Value: (λr : *. (λf : (∀x : r[0]. r[1]). (λx : r[1]. (f[1] (f[1] (f[1] (f[1] (f[1] x[0]))))))))
-Type: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
+Value: λa : *. λx : a. λb : *. λy : b. x
+Type: ∀a : *. ∀x : a. ∀b : *. ∀y : b. a
+λ> add two three
+Value: λr : *. λf : (∀x : r. r). λx : r. f (f (f (f (f x))))
+Type: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
 λ> five
-Value: (λr : *. (λf : (∀x : r[0]. r[1]). (λx : r[1]. (f[1] (f[1] (f[1] (f[1] (f[1] x[0]))))))))
-Type: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
-λ> (mult three three)
-Value: (λr : *. (λf : (∀x : r[0]. r[1]). (λx : r[1]. (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] x[0]))))))))))))
-Type: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
+Value: λr : *. λf : (∀x : r. r). λx : r. f (f (f (f (f x))))
+Type: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
+λ> mult three three
+Value: λr : *. λf : (∀x : r. r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
+Type: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
 λ> nine
-Value: (λr : *. (λf : (∀x : r[0]. r[1]). (λx : r[1]. (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] (f[1] x[0]))))))))))))
-Type: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
-λ> natType
-Value: (∀r : *. (∀f : (∀x : r[0]. r[1]). (∀x : r[1]. r[2])))
+Value: λr : *. λf : (∀x : r. r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
+Type: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
+λ> nat
+Value: ∀r : *. ∀f : (∀x : r. r). ∀x : r. r
 Type: *
 ```
 
 ## Notes
 
-### The `id` Pattern
+### The `ret` Pattern
 
-The `id` pattern is a technique where we assert that an object has a certain
-type. Using `id`, defined in lib/base.tt as `(\a : *. (\x : a. x))`, we can
-write `(id A x)` to assert that `x : A` when type checking. This is useful to
+The `ret` pattern is a technique where we assert that an object has a certain
+type. Using `ret`, defined in lib/base.tt as `\a : *. \x : a. x`, we can
+write `ret A x` to assert that `x : A` when type checking. This is useful to
 make sure a function has the right return type. For example, `add` in lib/nat.tt
-is defined as `(\n : natT. (\m : natT. (id natT ...)`. This pattern is used
+is defined as `\n : natT. \m : natT. ret natT (...)`. This pattern is used
 throughout the definitions in lib. It is also useful when using the REPL to
 determine the type of expressions.
 

@@ -1,70 +1,69 @@
 
 # Natural numbers.
 
-nat = (@r : *. (@f : (@x : r. r). (@x : r. r)))
+let nat = @r : *. @f : (@x : r. r). @x : r. r
 
-zero = (id nat
-  (\r : *. (\f : (@x : r. r). (\x : r. x))))
+let zero = ret nat
+  (\r : *. \f : (@x : r. r). \x : r. x)
 
-succ = (\n : nat. (id nat
-  (\r : *. (\f : (@x : r. r). (\x : r. (f (n r f x)))))))
+let succ = \n : nat. ret nat
+  (\r : *. \f : (@x : r. r). \x : r. f (n r f x))
 
-one = (succ zero)
-two = (succ one)
-three = (succ two)
-four = (succ three)
-five = (succ four)
-six = (succ five)
-seven = (succ six)
-eight = (succ seven)
-nine = (succ eight)
-ten = (succ nine)
-
-
-add = (\n : nat. (\m : nat. (id nat
-  (\r : *. (\f : (@x : r. r). (\x : r.
-    (n r f (m r f x))))))))
-
-mult = (\n : nat. (\m : nat. (id nat
-  (n nat (add m) zero))))
-
-power = (\n : nat. (\m : nat. (id nat
-  (m nat (mult n) one))))
+let one = succ zero
+let two = succ one
+let three = succ two
+let four = succ three
+let five = succ four
+let six = succ five
+let seven = succ six
+let eight = succ seven
+let nine = succ eight
+let ten = succ nine
 
 
-PNT = (pairT nat nat)
-PN = (pair nat nat)
+let add = \n : nat. \m : nat. ret nat
+  (n nat succ m)
+
+let mult = \n : nat. \m : nat. ret nat
+  (n nat (add m) zero)
+
+let power = \n : nat. \m : nat. ret nat
+  (m nat (mult n) one)
+
+
+let PNT = pairT nat nat
+let PN = pair nat nat
 
 # What I'm doing here is passing along a pair with (n, m) that starts at (0, 0).
 # On each iteration we convert it to (n + 1, n). At the end of the iterations we
 # should have (x, p), where x is the passed in number and p is its predecessor.
 # Returns 0 when 0 is used as an argument.
-pred = (\n : nat. (id nat
+let pred = \n : nat. ret nat
   ((n PNT
       (\pnt : PNT. (pnt PNT
-        (\next : nat. (\prev : nat.
-          (PN (succ next) next)))))
+        (\next : nat. \prev : nat.
+          PN (succ next) next)))
       (PN zero zero))
     nat
-    (\next : nat. (\prev : nat. prev)))))
+    (\next : nat. \prev : nat. prev))
 
 # The subtraction function. if m < n then m - n = 0.
-sub = (\n : nat. (\m : nat. (id nat
-  (m nat pred n))))
+let sub = \n : nat. \m : nat. ret nat
+  (m nat pred n)
 
 # Computes the factorial of a natural number.
-fact = (\n : nat. (id nat
+let fact = \n : nat. ret nat
   ((n PNT
-      (\pnt : PNT. (pnt PNT
-        (\fac : nat. (\m : nat.
-          (PN (mult fac m) (succ m))))))
+      (\pnt : PNT. pnt PNT
+        (\fac : nat. \m : nat.
+          PN (mult fac m) (succ m)))
       (PN one one))
    nat
-   (\fac : nat. (\m : nat. fac)))))
+   (\fac : nat. \m : nat. fac))
 
 
 ##### Proofs
 
 # Proof that if n = m, then succ n = succ m.
-succEq = (\n : nat. (\m : nat. (\eq : (I nat n m). (id (I nat (succ n) (succ m))
-  (cong nat nat n m succ eq)))))
+let succEq = \n : nat. \m : nat. \eq : (I nat n m). ret (I nat (succ n) (succ m))
+  (cong nat nat n m succ eq)

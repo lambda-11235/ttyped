@@ -4,17 +4,17 @@
 # be done in System Fω.
 
 # A boolean that operates over types.
-boolT = (@a : *. (@b : *. *))
-falseT = (\a : *. (\b : *. a))
-trueT = (\a : *. (\b : *. b))
+let boolT = @a : *. @b : *. *
+let falseT = \a : *. \b : *. a
+let trueT = \a : *. \b : *. b
 
-foo = (\bt : boolT. (\x : (bt unitT bool). x))
+let foo = \bt : boolT. \x : (bt unitT bool). x
 
 
 # Example:
-# λ> (foo trueT)
-# Value: (λx : (∀r : *. (∀x : r[0]. (∀y : r[1]. r[2]))). x[0])
-# Type: (∀x : (∀r : *. (∀x : r[0]. (∀y : r[1]. r[2]))). (∀r : *. (∀x : r[0]. (∀y : r[1]. r[2]))))
-# λ> (foo falseT)
-# Value: (λx : (∀a : *. (∀x : a[0]. a[1])). x[0])
-# Type: (∀x : (∀a : *. (∀x : a[0]. a[1])). (∀a : *. (∀x : a[0]. a[1])))
+# λ> foo trueT
+# Value: λx : (∀r : *. ∀x : r. ∀y : r. r). x
+# Type: ∀x : (∀r : *. ∀x : r. ∀y : r. r). ∀r : *. ∀x : r. ∀y : r. r
+# λ> foo falseT
+# Value: λx : (∀a : *. ∀x : a. a). x
+# Type: ∀x : (∀a : *. ∀x : a. a). ∀a : *. ∀x : a. a

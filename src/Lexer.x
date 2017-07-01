@@ -29,6 +29,8 @@ tokens :-
   "\"                                   { \p s -> lexOut p LLambda }
   "λ"                                   { \p s -> lexOut p LLambda }
 
+  "let"                                 { \p s -> lexOut p LLet }
+
   "*"                                   { \p s -> lexOut p LStar }
 
   -- @digit+                               { \p s -> lexOut p (LNumber (read s)) }
@@ -42,6 +44,7 @@ data Token = LLParen
            | LEqual
            | LForall
            | LLambda
+           | LLet
            | LStar
            -- | LNumber Nat
            | LSym String

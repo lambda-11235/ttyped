@@ -35,48 +35,51 @@ pos oldPos (LexOut _ line col _) _ = newPos (sourceName oldPos) line col
 
 
 -- * Grammar
--- TODO: removes try's.
 
 -- | A top level entry in the REPL.
 topREPL :: Parser (Either Binding AST)
-topREPL = (try (fmap Left binding) <|> fmap Right ast) <* eof
+topREPL = (fmap Left binding <|> fmap Right ast) <* eof
 
 
 bindings :: Parser [Binding]
 bindings = many binding <* eof
 
 binding :: Parser Binding
-binding = do name <- sym
+binding = do match LLet
+             name <- sym
              match LEqual
              t <- ast
              return (Binding name t)
 
 
 ast :: Parser AST
-ast = (match LStar *> pure Star) <|> parened <|> (Var <$> sym)
+ast = term
 
--- NOTE: This is necessary to avoid backtracking.
-parened = do match LLParen
-             e <- quant <|> fun <|> app
-             match LRParen
-             return e
+
+term = quant <|> fun <|> app
 
 quant = do match LForall
-           name <- sym
-           match LColon
-           t <- ast
-           match LDot
-           b <- ast
-           return (Quant name t b)
+           argAndBody Quant
 
 fun = do match LLambda
-         name <- sym
-         match LColon
-         t <- ast
-         match LDot
-         b <- ast
-         return (Fun name t b)
+         argAndBody Fun
 
-app = do o <- ast
-         os <- many1 ast
+argAndBody constructor =
+  do name <- sym
+     match LColon
+     t <- explicit
+     match LDot
+     b <- term
+     return (constructor name t b)
+
+app = do o <- explicit
+         os <- many explicit
          return (foldl App o os)
+
+
+explicit = (match LStar *> pure Star) <|> (fmap Var sym) <|> parened
+
+parened = do match LLParen
+             e <- term
+             match LRParen
+             return e
