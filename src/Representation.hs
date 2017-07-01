@@ -1,7 +1,7 @@
 
 module Representation where
 
-import Data.List (intersperse)
+import Data.List (findIndex, intersperse)
 import Data.Word
 
 
@@ -86,8 +86,9 @@ ppObject = ppObject' [] False
 
 {-
    For all the following functions the first argument is a list of bound
-   varibles, and the second argument determines whether the term should be
-   explicitly parenthesized.
+   variables whose respective indices correspond to the de Bruijn index, and the
+   second argument determines whether the term should be explicitly
+   parenthesized.
 -}
 
 ppTerm' :: [String] -> Bool -> Term -> String
@@ -102,7 +103,9 @@ ppContext' vars expParen (Quant name t c) =
 
 ppObject' :: [String] -> Bool -> Object -> String
 ppObject' vars _ (Var name index) =
-  if length (filter (== name) vars) > 1
+  -- Print a variable along with its de Bruijn index if the variable does not
+  -- refer to the closest binding with the same name.
+  if maybe 0 fromIntegral (findIndex (== name) vars) /= index
   then name ++ "[" ++ show index ++ "]"
   else name
 ppObject' vars expParen (Prod name t c) =

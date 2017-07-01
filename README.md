@@ -83,17 +83,18 @@ Type: ∀a : *. ∀x : a. a
 
 Note that internally TTyped uses de Bruijn indices. Thus, there may be times
 when a variable name could refer to two **different** variables. For
-disambiguation, such a variable name `v` is also given with its de Bruijn index
-`n` using the notation `v[n]`. An example would be
+disambiguation, a variable name `v` that refers to a binding other than the
+closest binding is also given with its de Bruijn index `n`, using the notation
+`v[n]`. An example would be
 
 ```
 λ> \a : *. \a : a. a
-Value: λa : *. λa : a. a[0]
+Value: λa : *. λa : a. a
 Type: ∀a : *. ∀a : a. a[1]
 ```
 
-Notice how in the value the trailing `a` refers to the second variable, while in
-the type it refers to the first variable.
+Here the value the trailing `a` refers to the second variable, while in the type
+`a[1]` refers to the first variable.
 
 Files that contain bindings can also be preloaded.
 
