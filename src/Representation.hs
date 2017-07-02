@@ -104,7 +104,7 @@ ppContext' :: [String] -> Bool -> Context -> String
 ppContext' _ _ Star = "*"
 ppContext' vars expParen (Quant Nothing t c) =
   let s = ppTerm' vars True t
-  in ppQuant (unusedName:vars) expParen [s] c
+  in maybeParen expParen (ppQuant (unusedName:vars) [s] c)
 ppContext' vars expParen (Quant (Just name) t c) =
   let s = "∀" ++ name ++ " : " ++ ppTerm' vars True t ++ ". "
         ++ ppContext' (name:vars) False c
@@ -119,7 +119,7 @@ ppObject' vars _ (Var name index) =
   else name
 ppObject' vars expParen (Prod Nothing t o) =
   let s = ppTerm' vars True t
-  in ppFunType (unusedName:vars) expParen [s] o
+  in maybeParen expParen (ppFunType (unusedName:vars) [s] o)
 ppObject' vars expParen (Prod (Just name) t o) =
   let s = "∀" ++  name++ " : " ++ ppTerm' vars True t ++ ". "
         ++ ppObject' (name:vars) False o
@@ -129,7 +129,7 @@ ppObject' vars expParen (Fun name t o) =
       s = "λ" ++ name' ++ " : " ++ ppTerm' vars True t ++ ". "
         ++ ppObject' (name':vars) False o
   in maybeParen expParen s
-ppObject' vars expParen (App o1 o2) = ppApps vars expParen [o2] o1
+ppObject' vars expParen (App o1 o2) = maybeParen expParen (ppApps vars [o2] o1)
 
 
 unusedName :: String
@@ -144,25 +144,23 @@ maybeParen False s = s
 maybeParen True s = "(" ++ s ++ ")"
 
 
-ppQuant vars expParen ss (Quant Nothing t c) =
+ppQuant vars ss (Quant Nothing t c) =
   let s = ppTerm' vars True t
-  in ppQuant (unusedName:vars) expParen (s:ss) c
-ppQuant vars expParen ss c =
-  maybeParen expParen (ppQ (reverse ss) ++ " -> " ++ ppContext' vars True c)
+  in ppQuant (unusedName:vars) (s:ss) c
+ppQuant vars ss c = ppQ (reverse ss) ++ " -> " ++ ppContext' vars True c
   where
     ppQ ss = intersperse " -> " ss >>= id
 
 
-ppFunType vars expParen ss (Prod Nothing t o) =
+ppFunType vars ss (Prod Nothing t o) =
   let s = ppTerm' vars True t
-  in ppFunType (unusedName:vars) expParen (s:ss) o
-ppFunType vars expParen ss o =
-  maybeParen expParen (ppFT (reverse ss) ++ " -> " ++ ppObject' vars True o)
+  in ppFunType (unusedName:vars) (s:ss) o
+ppFunType vars ss o = ppFT (reverse ss) ++ " -> " ++ ppObject' vars True o
   where
     ppFT ss = intersperse " -> " ss >>= id
 
 
-ppApps vars expParen os (App o1 o2) = ppApps vars expParen (o2:os) o1
-ppApps vars expParen os o = ppApps' (o:os)
+ppApps vars os (App o1 o2) = ppApps vars (o2:os) o1
+ppApps vars os o = ppApps' (o:os)
   where
-    ppApps' os = maybeParen expParen (intersperse " " (map (ppObject' vars True) os) >>= id)
+    ppApps' os = intersperse " " (map (ppObject' vars True) os) >>= id
