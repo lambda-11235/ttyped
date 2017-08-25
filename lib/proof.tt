@@ -1,3 +1,4 @@
+# Depends on base.tt.
 
 # A proof that (∀(x ∈ A), ¬(P x)) → ¬(∃(x ∈ A), P x).
 
