@@ -1,12 +1,12 @@
 
-module ReduceSpec (spec) where
+module Tests.ReduceSpec (spec) where
 
 import Test.Hspec
 import Test.QuickCheck
 
-import ReprGen
 import Reduce
-import Util
+import Tests.ReprGen
+import Tests.Util
 
 
 spec :: Spec

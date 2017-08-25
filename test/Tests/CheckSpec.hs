@@ -1,14 +1,14 @@
 
-module CheckSpec (spec) where
+module Tests.CheckSpec (spec) where
 
 import Test.Hspec
 import Test.QuickCheck
 
 import Check
 import Reduce
-import ReprGen
 import Representation
-import Util
+import Tests.ReprGen
+import Tests.Util
 
 
 spec :: Spec

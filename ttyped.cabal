@@ -31,7 +31,8 @@ test-suite spec
   build-depends:    base == 4.*, hspec == 2.*, QuickCheck, array == 0.5.*,
                     containers == 0.5.* , parsec == 3.*, readline == 1.*
   other-modules:    AST, Check, Reduce, Representation, Lexer, Parser
-                    , ReprGen, Util, CheckSpec, ReduceSpec
+                    , Tests.ReprGen, Tests.Util, Tests.CheckSpec
+                    , Tests.ReduceSpec
   default-language: Haskell2010
 
 source-repository head

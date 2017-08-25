@@ -1,4 +1,4 @@
-module ReprGen where
+module Tests.ReprGen where
 
 import Test.QuickCheck
 

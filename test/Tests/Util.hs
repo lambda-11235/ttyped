@@ -1,5 +1,5 @@
 
-module Util (typeChecks, isInNormalForm) where
+module Tests.Util (typeChecks, isInNormalForm) where
 
 import Check
 import Reduce
