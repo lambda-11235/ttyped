@@ -136,6 +136,32 @@ is defined as `\n : natT. \m : natT. ret natT (...)`. This pattern is used
 throughout the definitions in lib. It is also useful when using the REPL to
 determine the type of expressions.
 
+## Testing
+
+The best way to check TTyped is to run it over all the libraries. One may also
+use `stack check`. However, many bugs may not be caught with the default number
+of QuickCheck samples, so increasing the sample rate may be a good idea. An
+example
+
+```
+> stack test --ta -a10000
+
+ttyped-0.1.0.0: test (suite: spec, args: -a10000)
+
+
+Tests.Check
+  checkTerm
+    reduction of type checked term produces normal form
+    \a : *. \x : a. x has type @a : *. @x : a. a
+Tests.Reduce
+  reduceTerm
+    reducing twice produces the same result
+    reduction preserves types
+
+Finished in 6.0064 seconds
+4 examples, 0 failures
+```
+
 ## TODO
 
 - The pretty printer is kinda dumb when it comes to the short hand for function
