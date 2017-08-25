@@ -16,8 +16,7 @@ import Tests.Util
 spec :: Spec
 spec = do
   describe "reduceTerm" $
-    modifyMaxDiscardRatio (const 1000) $
-    modifyMaxSuccess (const 10000) $ do
+    modifyMaxDiscardRatio (10 *) $ do
       it "reducing twice produces the same result" $ property $ \obj ctx ->
         isRight (checkObject obj ctx) ==>
           (let obj' = reduceObject obj in obj' == reduceObject obj')

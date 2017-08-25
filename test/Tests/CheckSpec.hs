@@ -16,8 +16,7 @@ import Tests.Util
 spec :: Spec
 spec = do
   describe "checkTerm" $
-    modifyMaxDiscardRatio (const 1000) $
-    modifyMaxSuccess (const 10000) $ do
+    modifyMaxDiscardRatio (10 *) $ do
       it "reduction of type checked term produces normal form" $ property $ \obj ->
         isRight (checkObject obj Star) ==> (nfObject (reduceObject obj))
 

@@ -15,8 +15,8 @@ nfContext Star = True
 nfContext (Quant _ term ctx) = nfTerm term && nfContext ctx
 
 nfObject :: Object -> Bool
+nfObject (App (Fun _ _ _) _) = False
 nfObject (Var _ _) = True
 nfObject (Prod _ term obj) = nfTerm term && nfObject obj
 nfObject (Fun _ term obj) = nfTerm term && nfObject obj
-nfObject (App (Var _ _) obj) = nfObject obj
-nfObject (App _ _) = False
+nfObject (App obj1 obj2) = nfObject obj1 && nfObject obj2
