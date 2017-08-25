@@ -1,16 +1,27 @@
 
 module Tests.ReduceSpec (spec) where
 
+import Data.Either (isRight)
 import Test.Hspec
+import Test.Hspec.QuickCheck
 import Test.QuickCheck
 
+import Check
 import Reduce
+import Representation
 import Tests.ReprGen
 import Tests.Util
 
 
 spec :: Spec
 spec = do
-  describe "reduceTerm" $ do
-    it "reducing twice produces the same result" $ property $ \t ->
-      typeChecks t ==> (let t' = reduceTerm t in t' == reduceTerm t')
+  describe "reduceTerm" $
+    modifyMaxDiscardRatio (const 1000) $
+    modifyMaxSuccess (const 10000) $ do
+      it "reducing twice produces the same result" $ property $ \obj ctx ->
+        isRight (checkObject obj ctx) ==>
+          (let obj' = reduceObject obj in obj' == reduceObject obj')
+
+      it "reduction preserves types" $ property $ \obj ctx ->
+        let typ = checkObject obj ctx in
+          isRight typ ==> (typ == checkObject (reduceObject obj) ctx)

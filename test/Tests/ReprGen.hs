@@ -5,46 +5,53 @@ import Test.QuickCheck
 import Representation
 
 
+-- NOTE: When generating values we assume variable names won't be used in tests,
+-- and therefore don't assign meaningful names in expressions.
+
+
 instance Arbitrary Term where
-  arbitrary = sized termGen
+  arbitrary = sized (termGen 0)
 
   shrink (C ctx) = map C (shrink ctx)
   shrink (O obj) = map O (shrink obj)
 
 instance Arbitrary Context where
-  arbitrary = sized contextGen
+  arbitrary = sized (contextGen 0)
 
   shrink Star = []
-  shrink (Quant arg term ctx) = (Quant arg) <$> (shrink term) <*> (shrink ctx)
+  shrink (Quant arg term ctx) = ((Quant arg) <$> (shrink term) <*> (pure ctx))
+    ++ ((Quant arg) <$> (pure term) <*> (shrink ctx))
 
 instance Arbitrary Object where
-  arbitrary = sized objectGen
+  arbitrary = sized (objectGen 0)
 
   shrink (Var _ _) = []
-  shrink (Prod arg term obj) = (Prod arg) <$> (shrink term) <*> (shrink obj)
-  shrink (Fun arg term obj) = (Fun arg) <$> (shrink term) <*> (shrink obj)
+  shrink (Prod arg term obj) = ((Prod arg) <$> (shrink term) <*> (pure obj))
+    ++ ((Prod arg) <$> (pure term) <*> (shrink obj))
+  shrink (Fun arg term obj) = ((Fun arg) <$> (shrink term) <*> (pure obj))
+    ++ ((Fun arg) <$> (pure term) <*> (shrink obj))
   shrink (App obj1 obj2) = [obj1, obj2]
 
 
-termGen :: Int -> Gen Term
-termGen n = oneof [C <$> contextGen n, O <$> objectGen n]
+termGen :: Nat -> Int -> Gen Term
+termGen depth n = oneof [C <$> contextGen depth n, O <$> objectGen depth n]
 
-contextGen :: Int -> Gen Context
-contextGen 0 = return Star
-contextGen n = do argName <- arbitrary
-                  term <- termGen (n `div` 2)
-                  ctx <- contextGen (n `div` 2)
-                  elements [Star, Quant argName term ctx]
+contextGen :: Nat -> Int -> Gen Context
+contextGen depth 0 = return Star
+contextGen depth n =
+  oneof [ return Star
+        , Quant Nothing <$> (termGen depth (n `div` 2)) <*> (contextGen (depth + 1) (n - 1)) ]
 
-objectGen :: Int -> Gen Object
-objectGen 0 = Var <$> arbitrary <*> arbitrary
-objectGen n = do argName <- arbitrary
-                 argNameM <- arbitrary
-                 idx <- arbitrary
-                 term <- termGen (n `div` 2)
-                 obj1 <- objectGen (n `div` 2)
-                 obj2 <- objectGen (n `div` 2)
-                 elements [ Var argName idx
-                          , Prod argNameM term obj1
-                          , Fun argNameM term obj1
-                          , App obj1 obj2 ]
+objectGen :: Nat -> Int -> Gen Object
+objectGen depth 0 = if depth <= 0
+                    then return (Fun Nothing (C Star) (Var defVarName 0))
+                    else Var defVarName <$> (choose (0, depth - 1))
+objectGen depth n = oneof [ Var defVarName <$> (choose (0, depth - 1))
+                          , Prod Nothing <$> (termGen depth (n `div` 2)) <*> (objectGen (depth + 1) (n - 1))
+                          , Fun Nothing <$> (termGen depth (n `div` 2)) <*> (objectGen (depth + 1) (n - 1))
+                          , App <$> (objectGen depth (n `div` 2)) <*> (objectGen depth (n `div` 2)) ]
+
+
+-- | Default variable name used when we want to ignore a variable.
+defVarName :: String
+defVarName = "x"
