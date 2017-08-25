@@ -8,11 +8,22 @@ import Representation
 instance Arbitrary Term where
   arbitrary = sized termGen
 
+  shrink (C ctx) = map C (shrink ctx)
+  shrink (O obj) = map O (shrink obj)
+
 instance Arbitrary Context where
   arbitrary = sized contextGen
 
+  shrink Star = []
+  shrink (Quant arg term ctx) = (Quant arg) <$> (shrink term) <*> (shrink ctx)
+
 instance Arbitrary Object where
   arbitrary = sized objectGen
+
+  shrink (Var _ _) = []
+  shrink (Prod arg term obj) = (Prod arg) <$> (shrink term) <*> (shrink obj)
+  shrink (Fun arg term obj) = (Fun arg) <$> (shrink term) <*> (shrink obj)
+  shrink (App obj1 obj2) = [obj1, obj2]
 
 
 termGen :: Int -> Gen Term
