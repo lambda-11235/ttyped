@@ -6,7 +6,8 @@ It converts curry variables are converted to de Bruijn indices for variable
 identification.
 
 There is also a version based on intuitionistic type theory in the branch
-`martin_lof`.
+`martin_lof`. A video describing this project can be found at
+https://www.youtube.com/watch?v=_QosUn9q9fQ.
 
 ## Syntax
 
