@@ -172,3 +172,9 @@ Finished in 6.0064 seconds
   as `a -> a`. This should be fixed.
 
 - Add better AST conversion and type errors.
+
+## License
+
+Copyright (C) 2018, Taran Lynn <<taranlynn0@gmail.com>>
+
+This program is licensed under the GPLv3 (see the LICENSE file).
