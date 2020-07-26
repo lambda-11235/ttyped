@@ -1,18 +1,18 @@
 
 # TTyped
 
-TTyped is a dependently typed language based on the calculus of constructions.
-It converts curry variables are converted to de Bruijn indices for variable
-identification.
+TTyped is a dependently typed language based on the Calculus of
+Constructions (CoC). It converts curry variables to de Bruijn indices
+for variable identification.
 
-There is also a version based on intuitionistic type theory in the branch
-`martin_lof`. A video describing this project can be found at
-https://www.youtube.com/watch?v=_QosUn9q9fQ.
+There is also a version based on intuitionistic type theory in the
+branch `martin_lof` (**obsolete**). A video describing this project
+can be found at https://www.youtube.com/watch?v=_QosUn9q9fQ.
 
 ## Syntax
 
-Comment lines start with a `#` and extend to the end of the line. Underscore
-(`_`) denote an ignored variable.
+Comment lines start with a `#` and extend to the end of the line. Underscores
+(`_`) denote ignored variables.
 
 ### EBNF
 
@@ -43,7 +43,9 @@ The core language is extended with bindings at the top level of the REPL and
 files. These bindings have the form
 
 ```
-repl = bind | object ;
+repl = axiom | bind | object ;
+
+axiom = "axiom" , sym , ':' , term ;
 
 bind = "let" , sym , '=' , object ;
 ```
@@ -51,7 +53,7 @@ bind = "let" , sym , '=' , object ;
 also `sym` becomes
 
 ```
-sym = ( char , { char } ) - "let" ;
+sym = ( char , { char } ) - ("axiom" | "let");
 ```
 
 The `let` keyword is necessary to avoid backtracing in the parser and ambiguity
@@ -59,13 +61,24 @@ with function application.
 
 ## Semantics
 
-See "The Calculus of Constructions" by Coquand and Huet for the full semantics.
-One interesting thing to note is that the syntax given in the paper rules out
-unbound variables and forces `*` to be used only at the type level, while TTyped
-uses separate semantics checks. This is partly done to make parsing easier, as
-well as because TTyped uses Church-style variables instead of de Bruijn indices
-in its syntax. These Church-style variables are then converted into de Bruijn
+TTyped's semantics is essentially the same as the CoC extended with
+axioms. See "The Calculus of Constructions" by Coquand and Huet for
+its full semantics. One interesting thing to note is that the syntax
+given in the paper rules out unbound variables and forces `*` to be
+used only at the type level, while TTyped uses separate semantics
+checks. This is partly done to make parsing easier, as well as because
+TTyped uses Church-style variables instead of de Bruijn indices in its
+syntax. These Church-style variables are then converted into de Bruijn
 indices for type checking and reduction.
+
+### Axioms
+
+Axioms is TTyped's extension to the CoC. Axioms are symbolic that take
+on any valid variable type. One may think of an axiom `ax` of type `t`
+as a wrapper around the whole program like so `\ax : t. ...`.
+
+**TODO**: Give typing judgements and reductions for axioms. They
+should be almost identical to those for variables.
 
 ## Example Session
 
@@ -86,7 +99,7 @@ Note that internally TTyped uses de Bruijn indices. Thus, there may be times
 when a variable name could refer to two **different** variables. For
 disambiguation, a variable name `v` that refers to a binding other than the
 closest binding is also given with its de Bruijn index `n`, using the notation
-`v[n]`. An example would be
+`v[n]`. If `v` is an axiom, then `∞` is used, giving `v[∞]`. An example would be
 
 ```
 λ> \a : *. \a : a. a
@@ -126,6 +139,21 @@ Value: ∀r : *. (r -> r) -> r -> r
 
 ## Notes
 
+### Use of Axioms
+
+tl;dw **DO NOT** use axioms if you are doing proofs!!!
+
+The axiom statement allows us to introduces terms whose types are not
+constructible within the confines of CoC. Since this also allows any type
+to be inhabited, any program that uses axioms may be unsound (see
+`lib/fix.tt), and as such it is recommended to avoid them when doing
+proofs. However, axioms are useful for several things.
+
+- We want to introduce logical axioms which are impossible under CoC
+  (see `lib/classical.tt`).
+- We want to efficiently mimic constructs from other programming languages,
+  such as real numbers and the fixed-point operator.
+
 ### The `ret` Pattern
 
 The `ret` pattern is a technique where we assert that an object has a certain
@@ -162,7 +190,20 @@ Finished in 6.0064 seconds
 4 examples, 0 failures
 ```
 
+## Contributing
+
+If you wish to contribute please open up a GitHub issue or PR. I want
+to keep TTyped as a minimal implementation of the CoC, so extensions
+to the core language semantics will probably be turned down. However,
+syntax extensions that improve QoL would be nice. Also, any help in
+finding bugs in the type checker and reduction engine would be much
+appreciated.
+
 ## TODO
+
+- Implement an extractor for Scheme.
+  - Axioms should be left unimplemented in extracted code, and should
+    be implemented in scheme.
 
 - The pretty printer is kinda dumb when it comes to the short hand for function
   types (ie. `a -> b`). It will only print pi types this way if they ignore

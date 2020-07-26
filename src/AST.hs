@@ -47,6 +47,7 @@ data AST = Star
          | Var String
          | Fun (Maybe String) AST AST
          | App AST AST
+         | Axiom String AST
          deriving (Eq, Show)
 
 
@@ -84,6 +85,8 @@ toTerm ast binds = toTerm' ast binds []
       do o1' <- toTerm' o1 binds vars
          o2' <- toTerm' o2 binds vars
          R.O <$> (R.App <$> (assertObject o1') <*> (assertObject o2'))
+    toTerm' (Axiom name t) binds vars =
+      R.O <$> (R.Axiom name <$> (toTerm' t binds vars))
 
 toContext :: AST -> Bindings -> Either ConversionError R.Context
 toContext ast binds = toTerm ast binds >>= assertContext

@@ -9,7 +9,7 @@ let boolT = * -> * -> *
 let falseT = \a : *. \_ : *. a
 let trueT = \_ : *. \b : *. b
 
-let foo = \bt : boolT. \x : (bt unitT bool). x
+let foo = \bt : boolT. \x : (bt topT bool). x
 
 
 # Example:

@@ -55,10 +55,13 @@ mapContext f Star = Star
 mapContext f (Quant name t c) = Quant name (f t) (mapContext f c)
 
 
+-- Axioms always have an associate string, because they're symbolic
+-- objects.
 data Object = Var String Nat
             | Prod (Maybe String) Term Object
             | Fun (Maybe String) Term Object
             | App Object Object
+            | Axiom String Term
             deriving (Eq, Show)
 
 
@@ -89,6 +92,7 @@ addObject' n (Prod name t o) idx =
 addObject' n (Fun name t o) idx =
   Fun name (addTerm' n t idx) (addObject' n o (idx + 1))
 addObject' n (App o1 o2) idx = App (addObject' n o1 idx) (addObject' n o2 idx)
+addObject' _ ax@(Axiom _ _) _ = ax
 
 
 
@@ -146,6 +150,8 @@ ppObject' vars expParen (Fun name t o) =
         ++ ppObject' (name':vars) False o
   in maybeParen expParen s
 ppObject' vars expParen (App o1 o2) = maybeParen expParen (ppApps vars [o2] o1)
+ppObject' vars expParen (Axiom name _) =
+  if elem name vars then name ++ "[∞]" else name
 
 
 unusedName :: String

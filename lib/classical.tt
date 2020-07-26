@@ -1,0 +1,3 @@
+# Depends on base.tt.
+
+axiom excludedMiddle : @a : *. sum a (not a)

@@ -12,12 +12,12 @@ let comp = \a : *. \b : *. \c : *. \f : (b -> c). \g : (a -> b).
   \x : a. f (g x)
 
 
-let bot = @a : *. a
+let botT = @a : *. a
 
-let not = \a : *. @x : a. bot
+let not = \a : *. @x : a. botT
 
-let unitT = idT
-let unit = id
+let topT = idT
+let top = id
 
 
 let bool = @r : *. r -> r -> r

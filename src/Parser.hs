@@ -62,7 +62,17 @@ bindings :: Parser [Binding]
 bindings = many binding <* eof
 
 binding :: Parser Binding
-binding = do match LLet
+binding = axiom <|> letStmt
+
+axiom :: Parser Binding
+axiom = do match LAxiom
+           name <- sym
+           match LColon
+           t <- term
+           return (Binding name (Axiom name t))
+
+letStmt :: Parser Binding
+letStmt = do match LLet
              name <- sym
              match LEqual
              t <- ast

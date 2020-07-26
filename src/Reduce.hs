@@ -45,6 +45,7 @@ reduceObject v@(Var _ _) = v
 reduceObject (Prod name t o) = Prod name (reduceTerm t) (reduceObject o)
 reduceObject (Fun name t o) = Fun name (reduceTerm t) (reduceObject o)
 reduceObject (App o1 o2) = apply (reduceObject o1) (reduceObject o2)
+reduceObject (Axiom name t) = Axiom name (reduceTerm t)
 
 
 apply :: Object -> Object -> Object
@@ -80,6 +81,7 @@ substObject' (App o1 o2) o3 idx =
   let o1' = substObject' o1 o3 idx
       o2' = substObject' o2 o3 idx
   in App o1' o2'
+substObject' (Axiom name t) o idx = Axiom name (substTerm' t o idx)
 
 substTerm' (C c) o idx = C (substContext' c o idx)
 substTerm' (O o1) o2 idx = O (substObject' o1 o2 idx)

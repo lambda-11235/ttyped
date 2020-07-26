@@ -31,6 +31,7 @@ tokens :-
   "\"                                   { \p s -> lexOut p LLambda }
   "λ"                                   { \p s -> lexOut p LLambda }
 
+  "axiom"                               { \p s -> lexOut p LAxiom }
   "let"                                 { \p s -> lexOut p LLet }
 
   "*"                                   { \p s -> lexOut p LStar }
@@ -49,6 +50,7 @@ data Token = LLParen
            | LEqual
            | LForall
            | LLambda
+           | LAxiom
            | LLet
            | LStar
            | LUnderscore

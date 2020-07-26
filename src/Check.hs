@@ -76,6 +76,9 @@ checkObject (App o1 o2) context =
      checkTerm o2t context
      o3 <- checkApply (reduceTerm o1t) (reduceTerm o2t) o2
      return (reduceTerm o3)
+checkObject (Axiom _ t) context =
+  do checkArgType t context
+     return (reduceTerm t)
 
 
 -- | Checks that the type of an an argument is well typed.
@@ -125,4 +128,5 @@ unifyObjects (Var _ idx1) (Var _ idx2) = idx1 == idx2
 unifyObjects (Prod _ t1 o1) (Prod _ t2 o2) = (unify t1 t2) && (unifyObjects o1 o2)
 unifyObjects (Fun _ t1 o1) (Fun _ t2 o2) = (unify t1 t2) && (unifyObjects o1 o2)
 unifyObjects (App o1 o2) (App o3 o4) = (unifyObjects o1 o3) && (unifyObjects o2 o4)
+unifyObjects (Axiom name1 t1) (Axiom name2 t2) = (name1 == name2) && (unify t1 t2)
 unifyObjects _ _ = False

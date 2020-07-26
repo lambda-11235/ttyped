@@ -4,7 +4,7 @@
 
 let allNotExist = \a : *. \P : (a -> *). \all : (@x : a. not (P x)).
   ret (not (sigmaT a P))
-    (\exists : (sigmaT a P). exists bot all)
+    (\exists : (sigmaT a P). exists botT all)
 
 
 # A proof that (∃(x ∈ A), ¬(P x)) → ¬(∀(x ∈ A), P x).
@@ -13,4 +13,4 @@ let existNotAll = \a : *. \P : (a -> *).
   \exists : (sigmaT a (\x : a. not (P x))).
   ret (not (@x : a. P x))
     (\all : (@x : a. P x).
-      exists bot (\x : a. \y : (not (P x)). y (all x)))
+      exists botT (\x : a. \y : (not (P x)). y (all x)))
