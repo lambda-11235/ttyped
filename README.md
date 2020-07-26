@@ -70,8 +70,7 @@ indices for type checking and reduction.
 ## Example Session
 
 ```
-> stack build
-> stack exec ttyped
+> rlwrap stack run
 
 λ> let id = \a : *. \x : a. x
 λ> id
@@ -101,7 +100,7 @@ Here the value the trailing `a` refers to the second variable, while in the type
 Files that contain bindings can also be preloaded.
 
 ```
-> stack exec ttyped lib/base.tt lib/nat.tt
+> rlwrap stack run lib/base.tt lib/nat.tt
 
 λ> id
 Value: λa : *. λx : a. x

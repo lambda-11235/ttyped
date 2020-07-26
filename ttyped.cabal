@@ -18,8 +18,7 @@ executable ttyped
   main-is:             Main.hs
   other-modules:       AST, Check, Reduce, Representation, Lexer, Parser
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wincomplete-patterns
-  build-depends:       base == 4.*, array == 0.5.*, containers == 0.5.*
-                       , parsec == 3.*, readline == 1.*
+  build-depends:       base, array, containers, parsec
   build-tools:         alex
   default-language:    Haskell2010
 
@@ -28,8 +27,8 @@ test-suite spec
   main-is:          Spec.hs
   hs-source-dirs:   src, test
   ghc-options:      -Wincomplete-patterns
-  build-depends:    base == 4.*, hspec == 2.*, QuickCheck, array == 0.5.*,
-                    containers == 0.5.* , parsec == 3.*, readline == 1.*
+  build-depends:    base, hspec, QuickCheck, array,
+                    containers, parsec
   other-modules:    AST, Check, Reduce, Representation, Lexer, Parser
                     , Tests.ReprGen, Tests.Util, Tests.CheckSpec
                     , Tests.ReduceSpec

@@ -26,9 +26,9 @@ import Representation
 
 import Control.Exception
 import Data.Foldable (foldlM, foldrM)
-import qualified System.Console.Readline as RL
 import System.Environment (getArgs)
 import System.Exit
+import System.IO
 import Text.Parsec.Prim
 
 
@@ -40,42 +40,44 @@ main = do files <- getArgs
 
 repl :: A.Bindings -> IO a
 repl binds =
-  do input <- RL.readline "λ> "
-     case input of
-       Nothing -> exitSuccess
-       Just str ->
-         do RL.addHistory str
-            toks <- catch (evaluate (scan str)) (\e -> print (e :: ErrorCall) >> repl binds)
-            if null toks then repl binds else
-              case runParser topREPL () "REPL" toks of
-                Left err -> putStrLn ("Parse Error: " ++ show err)
+  do putStr "λ> "
+     hFlush stdout
 
-                Right (Left (A.Binding name ast)) ->
-                  case A.toTerm ast binds of
-                    Left err -> putStrLn ("Binding Error: " ++ show err)
+     eof <- hIsEOF stdin
+     if eof then exitSuccess else return ()
+     
+     str <- getLine
+     toks <- catch (evaluate (scan str)) (\e -> print (e :: ErrorCall) >> repl binds)
+     if null toks then repl binds else
+       case runParser topREPL () "REPL" toks of
+         Left err -> putStrLn ("Parse Error: " ++ show err)
 
-                    Right term ->
-                      case checkTerm term Star of
-                        Left err -> putStrLn ("Type Error: " ++ ppError err)
+         Right (Left (A.Binding name ast)) ->
+           case A.toTerm ast binds of
+             Left err -> putStrLn ("Binding Error: " ++ show err)
 
-                        Right typ ->
-                          let e = reduceTerm term in
-                            repl (A.addBinding name e binds)
+             Right term ->
+               case checkTerm term Star of
+                 Left err -> putStrLn ("Type Error: " ++ ppError err)
 
-                Right (Right ast) ->
-                  case A.toObject ast binds of
-                    Left err -> putStrLn ("Binding Error: " ++ show err)
+                 Right typ ->
+                   let e = reduceTerm term in
+                     repl (A.addBinding name e binds)
 
-                    Right obj ->
-                      case checkObject obj Star of
-                        Left err -> putStrLn ("Type Error: " ++ ppError err)
+         Right (Right ast) ->
+           case A.toObject ast binds of
+             Left err -> putStrLn ("Binding Error: " ++ show err)
 
-                        Right typ ->
-                          let o = reduceObject obj in
-                              do putStrLn $ "Value: " ++ (ppObject o)
-                                 putStrLn $ "Type: " ++ (ppTerm typ)
+             Right obj ->
+               case checkObject obj Star of
+                 Left err -> putStrLn ("Type Error: " ++ ppError err)
 
-            repl binds
+                 Right typ ->
+                   let o = reduceObject obj in
+                       do putStrLn $ "Value: " ++ (ppObject o)
+                          putStrLn $ "Type: " ++ (ppTerm typ)
+
+     repl binds
 
 
 loadFiles :: [String] -> IO A.Bindings
