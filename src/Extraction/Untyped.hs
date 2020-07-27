@@ -6,6 +6,8 @@ module Extraction.Untyped ( UntypedLC
                           , ppExtrError )
 where
 
+import Data.List (intersperse)
+
 import Reduce (reduceObject)
 import Representation (Nat)
 import qualified Representation as R
@@ -128,11 +130,23 @@ maybeParen expr = "(" ++ ppUntyped expr ++ ")"
 
 ppUntyped :: UntypedLC -> String
 ppUntyped (Var name _) = name
-ppUntyped (Fun name expr) = "λ" ++ name ++ ". " ++ ppUntyped expr
-ppUntyped (App expr1 expr2) = maybeParen expr1 ++ " " ++ maybeParen expr2
+ppUntyped (Fun name expr) = ppFun [name] expr
+ppUntyped (App expr1 expr2) = ppApps [expr2] expr1
 ppUntyped (Axiom name) = name
 ppUntyped (Erased _) = "<erased>"
 ppUntyped (ErasedFun expr) = "λ<erased>. " ++ ppUntyped expr
+  
+ppFun :: [String] -> UntypedLC -> String
+ppFun vars (Fun name expr) = ppFun (name:vars) expr
+ppFun vars expr =
+  let vars' = concat $ intersperse " " (reverse vars) in
+    "λ" ++ vars' ++ ". " ++ ppUntyped expr
+
+ppApps :: [UntypedLC] -> UntypedLC -> String
+ppApps os (App o1 o2) = ppApps (o2:os) o1
+ppApps os o =
+  let os' = map maybeParen (o:os) in
+    concat $ intersperse " " os'
 
 
 ppExtrError :: ExtrError -> String
