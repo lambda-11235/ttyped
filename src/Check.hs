@@ -23,15 +23,15 @@ import Representation
 import Data.Foldable (foldlM, foldrM)
 
 
-data Error = VarNotInContext String Context
+data Error = VarNotInContext String Nat Context
            | InvalidArgType Term
            | TypeMismatch Term Term
            | NonQuantTypeApplied Term Term
            deriving (Eq, Show)
 
 ppError :: Error -> String
-ppError (VarNotInContext name context) = "Variable " ++ name
-  ++ " not in context " ++ ppContext context
+ppError (VarNotInContext name idx context) = "Variable " ++ name
+  ++ "[" ++ show idx ++ "] not in context " ++ ppContext context
 ppError (InvalidArgType t) = "Invalid argument type " ++ ppTerm t
   ++ ", argument type must either be a context or an object of type *"
 ppError (TypeMismatch t1 t2) = "Got " ++ ppTerm t2 ++ " when expecting " ++ ppTerm t1
@@ -97,7 +97,7 @@ asSeenFrom name index context =
   do t <- getTerm index context (contextLength context)
      return (addTerm (index + 1) t)
   where
-    getTerm _ Star _ = Left (VarNotInContext name context)
+    getTerm _ Star _ = Left (VarNotInContext name index context)
     getTerm index (Quant _ t c) len =
       if index == (len - 1) then return t
       else getTerm index c (len - 1)

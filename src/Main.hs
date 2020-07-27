@@ -23,6 +23,7 @@ import Lexer
 import Parser
 import Reduce
 import Representation
+import Extraction.Untyped
 
 import Control.Exception
 import Data.Foldable (foldlM, foldrM)
@@ -74,8 +75,12 @@ repl binds =
 
                  Right typ ->
                    let o = reduceObject obj in
-                       do putStrLn $ "Value: " ++ (ppObject o)
-                          putStrLn $ "Type: " ++ (ppTerm typ)
+                     do putStrLn $ "Value     | " ++ (ppObject o)
+                        putStrLn $ "Type      | " ++ (ppTerm typ)
+                        case extract (O o) of
+                          Left err -> putStrLn ("Exraction Error: " ++ ppExtrError err)
+                          Right Nothing -> return ()
+                          Right (Just utlexpr) -> putStrLn $ "Extracted | " ++ (ppUntyped utlexpr)
 
      repl binds
 

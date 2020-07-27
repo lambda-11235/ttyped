@@ -16,7 +16,8 @@ cabal-version:       >=1.10
 executable ttyped
   hs-source-dirs:      src
   main-is:             Main.hs
-  other-modules:       AST, Check, Reduce, Representation, Lexer, Parser
+  other-modules:       AST, Check, Reduce, Representation, Lexer, Parser,
+                       Extraction.Untyped
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wincomplete-patterns
   build-depends:       base, array, containers, parsec
   build-tools:         alex

@@ -2,8 +2,14 @@
 # TTyped
 
 TTyped is a dependently typed language based on the Calculus of
-Constructions (CoC). It converts curry variables to de Bruijn indices
-for variable identification.
+Constructions (CoC). Features/quirks include
+
+1. Conversion from curry variables to de Bruijn indices for variable
+   identification.
+2. The ability to define axioms.
+3. Full reduction of terms that don't contain axioms.
+4. Extraction to the Untyped Lambda Calculus.
+5. A REPL that allows for easy experimentation with the CoC.
 
 There is also a version based on intuitionistic type theory in the
 branch `martin_lof` (**obsolete**). A video describing this project
@@ -87,13 +93,29 @@ should be almost identical to those for variables.
 
 λ> let id = \a : *. \x : a. x
 λ> id
-Value: λa : *. λx : a. x
-Type: ∀a : *. ∀x : a. a
+Value     | λa : *. λx : a. x
+Type      | ∀a : *. ∀x : a. a
+Extracted | λx1. x1
 λ> let idT = @a : *. a -> a
+λ> idT
+Value     | ∀a : *. a -> a
+Type      | *
 λ> id idT id
-Value: λa : *. λx : a. x
-Type: ∀a : *. a -> a
+Value     | λa : *. λx : a. x
+Type      | ∀a : *. a -> a
+Extracted | λx1. x1
+λ> axiom bot : @a : *. a
+λ> bot idT
+Value     | bot (∀a : *. a -> a)
+Type      | ∀a : *. a -> a
+Extracted | bot
 ```
+
+A couple of things should be readily apparent from the above
+example. First, all non-let expression will have their value and type
+printed. Second, any value that is not a type will be extracted to the
+untyped lambda calculus and the result will be printed. Third, axiom
+applications will, and cannot, be reduced.
 
 Note that internally TTyped uses de Bruijn indices. Thus, there may be times
 when a variable name could refer to two **different** variables. For
@@ -103,8 +125,9 @@ closest binding is also given with its de Bruijn index `n`, using the notation
 
 ```
 λ> \a : *. \a : a. a
-Value: λa : *. λa : a. a
-Type: ∀a : *. ∀a : a. a[1]
+Value     | λa : *. λa : a. a
+Type      | ∀a : *. ∀a : a. a[1]
+Extracted | λa1. a1
 ```
 
 Here the value the trailing `a` refers to the second variable, while in the type
@@ -116,25 +139,32 @@ Files that contain bindings can also be preloaded.
 > rlwrap stack run lib/base.tt lib/nat.tt
 
 λ> id
-Value: λa : *. λx : a. x
-Type: ∀a : *. ∀x : a. a
+Value     | λa : *. λx : a. x
+Type      | ∀a : *. ∀x : a. a
+Extracted | λx1. x1
 λ> const
-Value: λa : *. λx : a. λb : *. λ_ : b. x
-Type: ∀a : *. ∀x : a. ∀b : *. b -> a
+Value     | λa : *. λx : a. λb : *. λ_ : b. x
+Type      | ∀a : *. ∀x : a. ∀b : *. b -> a
+Extracted | λx1. λv3. x1
 λ> add two three
-Value: λr : *. λf : (r -> r). λx : r. f (f (f (f (f x))))
-Type: ∀r : *. (r -> r) -> r -> r
+Value     | λr : *. λf : (r -> r). λx : r. f (f (f (f (f x))))
+Type      | ∀r : *. (r -> r) -> r -> r
+Extracted | λf1. λx2. f1 (f1 (f1 (f1 (f1 x2))))
 λ> five
-Value: λr : *. λf : (r -> r). λx : r. f (f (f (f (f x))))
-Type: ∀r : *. ∀f : (r -> r). ∀x : r. r
+Value     | λr : *. λf : (r -> r). λx : r. f (f (f (f (f x))))
+Type      | ∀r : *. ∀f : (r -> r). ∀x : r. r
+Extracted | λf1. λx2. f1 (f1 (f1 (f1 (f1 x2))))
 λ> mult three three
-Value: λr : *. λf : (r -> r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
-Type: ∀r : *. (r -> r) -> r -> r
+Value     | λr : *. λf : (r -> r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
+Type      | ∀r : *. (r -> r) -> r -> r
+Extracted | λf1. λx2. f1 (f1 (f1 (f1 (f1 (f1 (f1 (f1 (f1 x2))))))))
 λ> nine
-Value: λr : *. λf : (r -> r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
-Type: ∀r : *. ∀f : (r -> r). ∀x : r. r
+Value     | λr : *. λf : (r -> r). λx : r. f (f (f (f (f (f (f (f (f x))))))))
+Type      | ∀r : *. ∀f : (r -> r). ∀x : r. r
+Extracted | λf1. λx2. f1 (f1 (f1 (f1 (f1 (f1 (f1 (f1 (f1 x2))))))))
 λ> nat
-Value: ∀r : *. (r -> r) -> r -> r
+Value     | ∀r : *. (r -> r) -> r -> r
+Type      | *
 ```
 
 ## Notes
@@ -215,6 +245,6 @@ appreciated.
 
 ## License
 
-Copyright (C) 2018, Taran Lynn <<taranlynn0@gmail.com>>
+Copyright (C) 2020, Taran Lynn <<taranlynn0@gmail.com>>
 
 This program is licensed under the GPLv3 (see the LICENSE file).
