@@ -1,6 +1,6 @@
 
-module Extraction.Untyped ( UntypedLC
-                          , ExtrError
+module Extraction.Untyped ( UntypedLC (..)
+                          , ExtrError (..)
                           , extract
                           , ppUntyped
                           , ppExtrError )

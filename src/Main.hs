@@ -24,7 +24,11 @@ import Parser
 import Reduce
 import Representation
 import Extraction.Untyped
+import qualified Extraction.Scheme as ES
 
+import qualified Options.Applicative as OA
+import Data.Semigroup ((<>))
+  
 import Control.Exception
 import Data.Foldable (foldlM, foldrM)
 import System.Environment (getArgs)
@@ -33,10 +37,33 @@ import System.IO
 import Text.Parsec.Prim
 
 
+data CmdLine = CmdLine { getExtrDir :: Maybe String
+                       , getFiles :: [String] }
+  deriving (Show)
+
+cmdLineP :: OA.Parser CmdLine
+cmdLineP = CmdLine
+  <$> OA.optional (OA.strOption
+                   (OA.long "extract"
+                     <> OA.short 'e'
+                     <> OA.metavar "DIR"
+                     <> OA.help "Extract Scheme code to DIR"))
+  <*> OA.many (OA.strArgument (OA.metavar "FILE"))
+
+cmdLineInfo :: OA.ParserInfo CmdLine
+cmdLineInfo = OA.info (cmdLineP OA.<**> OA.helper)
+  (OA.fullDesc
+   <> OA.header "TTyped - An implementation of the Calculus of Constructions" )
+
+
 main :: IO ()
-main = do files <- getArgs
-          binds <- loadFiles files
-          seq binds (repl binds)
+main =
+  do (CmdLine extrDir files) <- OA.execParser cmdLineInfo
+     case extrDir of
+       Nothing ->
+         do (_, binds) <- loadFiles files
+            seq binds (repl binds)
+       Just dir -> extractFiles dir files
 
 
 repl :: A.Bindings -> IO a
@@ -85,16 +112,18 @@ repl binds =
      repl binds
 
 
-loadFiles :: [String] -> IO A.Bindings
-loadFiles = foldlM loadFile A.empty
+loadFiles :: [String] -> IO ([String], A.Bindings)
+loadFiles files =
+  do (vars, binds) <- foldlM loadFile ([], A.empty) files
+     return (reverse vars, binds)
 
-loadFile :: A.Bindings -> String -> IO A.Bindings
+loadFile :: ([String], A.Bindings) -> String -> IO ([String], A.Bindings)
 loadFile binds file = do contents <- readFile file
                          case runParser bindings () file (scan contents) of
                            Left err -> error (show err)
                            Right bs -> return (foldl add' binds bs)
   where
-    add' binds (A.Binding name ast) =
+    add' (vars, binds) (A.Binding name ast) =
       case A.toTerm ast binds of
         Left err -> error ("Binding Error (" ++ file ++ "): " ++ show err)
 
@@ -104,4 +133,23 @@ loadFile binds file = do contents <- readFile file
 
             Right typ ->
               let t = reduceTerm term in
-                A.addBinding name t binds
+                (name:vars, A.addBinding name t binds)
+
+
+extractFiles :: String -> [String] -> IO ()
+extractFiles = extractFiles' A.empty
+
+extractFiles' :: A.Bindings -> String -> [String] -> IO ()
+extractFiles' _ _ [] = return ()
+extractFiles' binds dir (file:files) =
+  do (vars, binds') <- loadFile ([], binds) file
+     case ES.extractBindings (reverse vars) binds' of
+       Left err -> putStrLn ("Exraction Error: " ++ ppExtrError err)
+       Right s -> writeFile (outputPath dir file) (s ++ "\n")
+     extractFiles' binds' dir files
+
+outputPath :: String -> String -> String
+outputPath dir file = dir ++ "/" ++ map replaceSlash file ++ ".scm"
+  where
+    replaceSlash '/' = '_'
+    replaceSlash c = c

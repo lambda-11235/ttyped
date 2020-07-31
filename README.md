@@ -8,7 +8,7 @@ Constructions (CoC). Features/quirks include
    identification.
 2. The ability to define axioms.
 3. Full reduction of terms that don't contain axioms.
-4. Extraction to the Untyped Lambda Calculus.
+4. Extraction to the Untyped Lambda Calculus and Scheme.
 5. A REPL that allows for easy experimentation with the CoC.
 
 There is also a version based on intuitionistic type theory in the
@@ -167,6 +167,30 @@ Value     | ∀r : *. (r -> r) -> r -> r
 Type      | *
 ```
 
+
+## Scheme Extraction
+
+Scheme code can be extracted with the `--extract` flag. This option
+must be given a directory to output extracted Scheme scripts to. To
+run the example `hello` application run.
+
+```
+> mkdir tmp
+> stack run -- lib/base.tt lib/scheme/base.tt examples/hello.tt -e tmp
+> cat tmp/lib_base.tt.scm lib/scheme/base.scm  tmp/lib_scheme_base.tt.scm tmp/examples_hello.tt.scm examples/hello.scm > tmp/out.scm
+```
+
+You can now run `tmp/out.scm` using an interpreter of your choice. The
+script should simply print `5`.
+
+### Axioms
+
+Axioms are left unimplemented in the extracted Scheme code, and must
+be implemented in order for the extracted code to run. This can be
+used to implement a FFI. See `examples/` and `lib/scheme/` for
+examples.
+
+
 ## Notes
 
 ### Use of Axioms
@@ -181,8 +205,7 @@ proofs. However, axioms are useful for several things.
 
 - We want to introduce logical axioms which are impossible under CoC
   (see `lib/classical.tt`).
-- We want to efficiently mimic constructs from other programming languages,
-  such as real numbers and the fixed-point operator.
+- As an FFI to Scheme.
 
 ### The `ret` Pattern
 
@@ -230,10 +253,6 @@ finding bugs in the type checker and reduction engine would be much
 appreciated.
 
 ## TODO
-
-- Implement an extractor for Scheme.
-  - Axioms should be left unimplemented in extracted code, and should
-    be implemented in scheme.
 
 - The pretty printer is kinda dumb when it comes to the short hand for function
   types (ie. `a -> b`). It will only print pi types this way if they ignore

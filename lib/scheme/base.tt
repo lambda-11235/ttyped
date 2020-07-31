@@ -1,0 +1,100 @@
+# Depends on lib/base.tt
+# Implementation in lib/scheme/base.scm
+
+# Axiom for fixed-point combinator.
+# Breaks validity of proofs.
+# In an implementation we would have
+# fix f x = f (fix f) x
+
+axiom fix : @a : *. @P : (a -> *).
+  ((@x : a. P x) -> (@x : a. P x)) -> (@x : a. P x)
+
+
+##### Booleans #####
+
+axiom Sbool : *
+axiom Sfalse : Sbool
+axiom Strue : Sbool
+
+# No laziness so top is used as a function wrapper.
+axiom Sif : @a : *. Sbool -> (topT -> a) -> (topT -> a) -> a
+
+axiom Snot : Sbool -> Sbool
+axiom Sand : Sbool -> Sbool -> Sbool
+axiom Sor : Sbool -> Sbool -> Sbool
+
+let SboolTObool = \b : Sbool.
+  Sif bool b (\_ : topT. true) (\_ : topT. false)
+
+let boolTOSbool = \b : bool. b Sbool Sfalse Strue
+
+
+##### Lists #####
+
+axiom Slist : * -> *
+axiom Snil : @a : *. Slist a
+axiom Scons : @a : *. a -> (Slist a) -> (Slist a)
+
+axiom Sfoldr : @a : *. @b : *. b -> (a -> b -> b) -> (Slist a) -> b
+# Add more functions and proofs
+
+
+##### Reals #####
+
+axiom Sreal : *
+
+axiom Szero : Sreal
+axiom Sone : Sreal
+axiom Stwo : Sreal
+axiom Sthree : Sreal
+axiom Sfour : Sreal
+axiom Sfive : Sreal
+axiom Ssix : Sreal
+axiom Sseven : Sreal
+axiom Seight : Sreal
+axiom Snine : Sreal
+axiom Sten : Sreal
+
+axiom Sadd : Sreal -> Sreal -> Sreal
+axiom Ssub : Sreal -> Sreal -> Sreal
+axiom Smult : Sreal -> Sreal -> Sreal
+axiom Sdiv : Sreal -> Sreal -> Sreal
+
+axiom Seq : Sreal -> Sreal -> Sbool
+axiom Slt : Sreal -> Sreal -> Sbool
+axiom Sgt : Sreal -> Sreal -> Sbool
+axiom Slte : Sreal -> Sreal -> Sbool
+axiom Sgte : Sreal -> Sreal -> Sbool
+
+# Add more functions and proofs
+
+
+##### IO #####
+
+axiom world : *
+let IO = \a : *. world -> (pairT world a)
+
+# Define IO as a monad
+let mapIO = \a : *. \b : *. \f : (a -> b). \io : (IO a). ret (IO b)
+  (\w : world. io w (pairT world b) (\wp : world. \x : a. pair world b wp (f x)))
+
+let pureIO = \a : *. \x : a. ret (IO a)
+  (\w : world. pair world a w x)
+
+let appIO = \a : *. \b : *. \iof : (IO (a -> b)). \ioa : (IO a). ret (IO b)
+  (\w : world. iof w (pairT world b)
+    (\wp : world. \f : (a -> b). ioa wp (pairT world b)
+      (\wpp : world. \x : a. pair world b wpp (f x))))
+
+let bindIO = \a : *. \io : (IO (IO a)). ret (IO a)
+  (\w : world. io w (pairT world a)
+    (\wp : world. \iop : (IO a). iop wp (pairT world a)
+      (\wpp : world. \x : a. pair world a wpp x)))
+
+let seqIO = \a : *. \b : *. \ioa : (IO a). \iob : (IO b). ret (IO b)
+  (\w : world. ioa w (pairT world b)
+    (\wp : world. \_ : a. iob wp))
+
+# Actual IO
+
+axiom println : @a : *. @x : a. IO topT

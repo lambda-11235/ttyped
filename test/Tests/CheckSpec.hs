@@ -4,7 +4,7 @@ module Tests.CheckSpec (spec) where
 import Data.Either (isRight)
 import Test.Hspec
 import Test.Hspec.QuickCheck
-import Test.QuickCheck
+import Test.QuickCheck (property, (==>))
 
 import Check
 import Reduce

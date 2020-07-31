@@ -17,9 +17,9 @@ executable ttyped
   hs-source-dirs:      src
   main-is:             Main.hs
   other-modules:       AST, Check, Reduce, Representation, Lexer, Parser,
-                       Extraction.Untyped
+                       Extraction.Untyped, Extraction.Scheme
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wincomplete-patterns
-  build-depends:       base, array, containers, parsec
+  build-depends:       base, array, containers, parsec, optparse-applicative
   build-tools:         alex
   default-language:    Haskell2010
 

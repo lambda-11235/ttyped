@@ -1,6 +1,6 @@
 module Tests.ReprGen where
 
-import Test.QuickCheck
+import Test.QuickCheck (Arbitrary (..), Gen (..), sized, oneof, choose)
 
 import Representation
 
